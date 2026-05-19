@@ -60,12 +60,10 @@ header .subtitle { color: var(--text2); font-size: 12px; }
   align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: var(--accent);
 }
 .char-card .char-footer {
-  position: absolute; bottom: 0; left: 0; right: 0;
   padding: 3px 4px; display: flex; align-items: center; justify-content: space-between; gap: 2px;
-  background: rgba(0,0,0,.75);
 }
 .char-card .char-name {
-  font-size: 11px; color: #fff; white-space: nowrap;
+  font-size: 11px; color: var(--text); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; flex: 1;
 }
 .char-card .elem-icon { width: 14px; height: 14px; flex-shrink: 0; }
@@ -87,12 +85,7 @@ header .subtitle { color: var(--text2); font-size: 12px; }
 .elem-chip img { width: 12px; height: 12px; }
 .unavailable-section {
   flex: 0 0 auto; border-top: 1px solid var(--border);
-  padding: 8px 10px; display: flex; flex-direction: column; gap: 6px;
-  max-height: 45%; overflow: hidden;
-  transition: background .15s, border-top-color .15s;
-}
-.unavailable-section.drag-over {
-  background: rgba(0,200,212,.05); border-top-color: var(--accent);
+  padding: 8px 12px; display: flex; flex-direction: column; gap: 6px;
 }
 .unavailable-header {
   display: flex; align-items: center; gap: 8px;
@@ -100,18 +93,11 @@ header .subtitle { color: var(--text2); font-size: 12px; }
 }
 .unavailable-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 8px; overflow-y: auto; flex: 1;
+  gap: 8px; max-height: 140px; overflow-y: auto;
 }
 .unavailable-grid::-webkit-scrollbar { width: 4px; }
 .unavailable-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-.unavailable-drop-hint {
-  grid-column: 1 / -1; border: 1px dashed var(--border); border-radius: 6px;
-  color: var(--text2); font-size: 11px; text-align: center; padding: 10px 8px;
-  transition: border-color .15s, color .15s; pointer-events: none;
-}
-.unavailable-section.drag-over .unavailable-drop-hint {
-  border-color: var(--accent); color: var(--accent);
-}
+.char-card.unavailable { opacity: 0.6; filter: grayscale(40%); }
 .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .teams-header {
   padding: 10px 16px; border-bottom: 1px solid var(--border);
@@ -145,24 +131,24 @@ header .subtitle { color: var(--text2); font-size: 12px; }
 }
 .slot-group { display: flex; gap: 6px; flex-shrink: 0; }
 .slot {
-  width: 92px; height: 92px; border-radius: 6px; border: 1px dashed var(--border);
+  width: 66px; height: 66px; border-radius: 6px; border: 1px dashed var(--border);
   background: var(--slot-empty); position: relative; overflow: hidden;
   transition: border-color .15s, background .15s;
 }
 .slot.drag-over { border-color: var(--accent); background: rgba(0,200,212,.08); border-style: solid; }
 .slot.empty { display: flex; align-items: center; justify-content: center; cursor: default; }
-.slot.empty .slot-plus { font-size: 30px; color: var(--border); line-height: 1; }
+.slot.empty .slot-plus { font-size: 22px; color: var(--border); line-height: 1; }
 .slot.empty.drag-over .slot-plus { color: var(--accent); }
 .slot.filled { border-style: solid; border-color: var(--border); }
 .slot.filled img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .slot .slot-name {
   position: absolute; bottom: 0; left: 0; right: 0;
-  background: rgba(0,0,0,.75); font-size: 12px; text-align: center;
+  background: rgba(0,0,0,.75); font-size: 10px; text-align: center;
   padding: 2px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .slot-clear {
-  position: absolute; top: 2px; right: 2px; width: 20px; height: 20px;
-  background: rgba(0,0,0,.7); border: none; color: #fff; font-size: 12px;
+  position: absolute; top: 2px; right: 2px; width: 16px; height: 16px;
+  background: rgba(0,0,0,.7); border: none; color: #fff; font-size: 10px;
   border-radius: 50%; cursor: pointer; display: none;
   align-items: center; justify-content: center; padding: 0; line-height: 1;
 }
@@ -170,7 +156,7 @@ header .subtitle { color: var(--text2); font-size: 12px; }
 .slot-clear:hover { background: #ff4d6d; }
 .team-note {
   width: 160px; flex-shrink: 0; background: var(--bg3); border: 1px solid var(--border); color: var(--text);
-  border-radius: 4px; padding: 6px 8px; font-size: 12px; resize: none; height: 92px;
+  border-radius: 4px; padding: 6px 8px; font-size: 12px; resize: none; height: 66px;
   outline: none; font-family: inherit; line-height: 1.5;
 }
 .team-note:focus { border-color: var(--accent); }
@@ -230,10 +216,12 @@ const ELEM_KEY = {
   '热熔':'rerong','湮灭':'jielin','衍射':'yanshe'
 };
 const ELEM_LIST = ['冰凝','气动','导电','热熔','湮灭','衍射'];
+const CHAR_BY_ID = new Map(CHARACTERS.map(c => [c.id, c]));
 
 const PRESET_UNAVAILABLE_IDS = [4, 5, 6, 9, 10, 11, 13, 16, 17, 18, 19, 21, 22, 25, 29];
 
 let state = { teams: [], notes: [], unavailableIds: [] };
+let unavailableSet = new Set();
 let draggingId = null;
 let searchQ = '';
 let elemF = null;
@@ -255,18 +243,45 @@ function loadState() {
         return;
       }
     }
-  } catch(e) {}
+  } catch(e) { console.warn('wuwa-deck: failed to load saved state, resetting.', e); }
   state.teams = Array.from({length: 6}, () => [null, null, null]);
   state.notes = Array(6).fill('');
   state.unavailableIds = PRESET_UNAVAILABLE_IDS.slice();
 }
 
-function getChar(id) { return CHARACTERS.find(c => c.id === id); }
+function getChar(id) { return CHAR_BY_ID.get(id); }
 
-function isUnavailable(characterId) { return state.unavailableIds.includes(characterId); }
+function isUnavailable(characterId) { return unavailableSet.has(characterId); }
 
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function charCardHTML(c, extraClass, source) {
+  const ek = ELEM_KEY[c.element] || '';
+  const ic = ELEM_ICONS[ek] || '';
+  const init = c.name[0] || '?';
+  return `<div class="char-card star-${c.star}${extraClass}" draggable="true" data-id="${c.id}" data-source="${source}" title="${esc(c.name)}（${esc(c.element)}）">
+      <span class="star-badge">${c.star}★</span>
+      <img class="char-portrait" src="${c.img}" alt="${esc(c.name)}"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="char-initial">${init}</div>
+      <div class="char-footer">
+        <span class="char-name">${esc(c.name)}</span>
+        ${ic ? `<img class="elem-icon" src="${ic}" alt="${esc(c.element)}">` : ''}
+      </div>
+    </div>`;
+}
+
+function attachDragListeners(grid) {
+  grid.querySelectorAll('.char-card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      draggingId = parseInt(card.dataset.id);
+      e.dataTransfer.effectAllowed = 'all';
+      card.style.opacity = '.5';
+    });
+    card.addEventListener('dragend', () => { card.style.opacity = ''; draggingId = null; });
+  });
 }
 
 function renderElemFilters() {
@@ -298,62 +313,19 @@ function renderRoster() {
   const availCount = list.filter(c => (useCount[c.id] || 0) < (SUSTAIN_IDS.has(c.id) ? 2 : 1)).length;
   document.getElementById('rosterCount').textContent = availCount + ' 名可用 / ' + obtainedCount + ' 名已获得';
   grid.innerHTML = list.map(c => {
-    const ek = ELEM_KEY[c.element] || '';
-    const ic = ELEM_ICONS[ek] || '';
-    const init = c.name[0] || '?';
     const threshold = SUSTAIN_IDS.has(c.id) ? 2 : 1;
     const usedClass = (useCount[c.id] || 0) >= threshold ? ' used' : '';
-    return `<div class="char-card star-${c.star}${usedClass}" draggable="true" data-id="${c.id}" data-source="roster" title="${esc(c.name)}（${esc(c.element)}）">
-      <span class="star-badge">${c.star}★</span>
-      <img class="char-portrait" src="${c.img}" alt="${esc(c.name)}"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="char-initial">${init}</div>
-      <div class="char-footer">
-        <span class="char-name">${esc(c.name)}</span>
-        ${ic ? `<img class="elem-icon" src="${ic}" alt="${esc(c.element)}">` : ''}
-      </div>
-    </div>`;
+    return charCardHTML(c, usedClass, 'roster');
   }).join('');
-  grid.querySelectorAll('.char-card').forEach(card => {
-    card.addEventListener('dragstart', e => {
-      draggingId = parseInt(card.dataset.id);
-      e.dataTransfer.effectAllowed = 'all';
-      card.style.opacity = '.5';
-    });
-    card.addEventListener('dragend', () => { card.style.opacity = ''; draggingId = null; });
-  });
+  attachDragListeners(grid);
 }
 
 function renderUnavailableRoster() {
   const unavailChars = CHARACTERS.filter(c => isUnavailable(c.id));
   const grid = document.getElementById('unavailable');
   document.getElementById('unavailableCount').textContent = unavailChars.length + ' / ' + CHARACTERS.length;
-  const hint = '<div class="unavailable-drop-hint">将角色拖至此处标记为未获得</div>';
-  grid.innerHTML = unavailChars.length
-    ? unavailChars.map(c => {
-        const ek = ELEM_KEY[c.element] || '';
-        const ic = ELEM_ICONS[ek] || '';
-        const init = c.name[0] || '?';
-        return `<div class="char-card star-${c.star}" draggable="true" data-id="${c.id}" data-source="unavailable" title="${esc(c.name)}（${esc(c.element)}）">
-      <span class="star-badge">${c.star}★</span>
-      <img class="char-portrait" src="${c.img}" alt="${esc(c.name)}"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="char-initial">${init}</div>
-      <div class="char-footer">
-        <span class="char-name">${esc(c.name)}</span>
-        ${ic ? `<img class="elem-icon" src="${ic}" alt="${esc(c.element)}">` : ''}
-      </div>
-    </div>`;
-      }).join('')
-    : hint;
-  grid.querySelectorAll('.char-card').forEach(card => {
-    card.addEventListener('dragstart', e => {
-      draggingId = parseInt(card.dataset.id);
-      e.dataTransfer.effectAllowed = 'all';
-      card.style.opacity = '.5';
-    });
-    card.addEventListener('dragend', () => { card.style.opacity = ''; draggingId = null; });
-  });
+  grid.innerHTML = unavailChars.map(c => charCardHTML(c, ' unavailable', 'unavailable')).join('');
+  attachDragListeners(grid);
 }
 
 function renderSlot(ti, si, cid) {
@@ -422,7 +394,7 @@ function renderTeams() {
     btn.addEventListener('click', () => {
       const ti = +btn.dataset.team;
       state.teams.splice(ti, 1); state.notes.splice(ti, 1);
-      saveState(); renderTeams(); renderRoster(); updateAddBtn();
+      saveState(); renderTeams(); renderRoster();
     });
   });
 
@@ -435,40 +407,32 @@ function updateAddBtn() {
 }
 
 loadState();
+unavailableSet = new Set(state.unavailableIds);
 renderElemFilters();
 renderRoster();
 renderUnavailableRoster();
 renderTeams();
 
 const rosterGrid = document.getElementById('roster');
-const unavailSection = document.querySelector('.unavailable-section');
+const unavailGrid = document.getElementById('unavailable');
 
 rosterGrid.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
 rosterGrid.addEventListener('drop', e => {
   e.preventDefault();
   if (draggingId !== null && isUnavailable(draggingId)) {
     const idx = state.unavailableIds.indexOf(draggingId);
-    if (idx > -1) state.unavailableIds.splice(idx, 1);
+    if (idx > -1) { state.unavailableIds.splice(idx, 1); unavailableSet.delete(draggingId); }
     draggingId = null;
     saveState(); renderRoster(); renderUnavailableRoster();
   }
 });
 
-unavailSection.addEventListener('dragover', e => {
-  if (draggingId !== null && !isUnavailable(draggingId)) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    unavailSection.classList.add('drag-over');
-  }
-});
-unavailSection.addEventListener('dragleave', e => {
-  if (!unavailSection.contains(e.relatedTarget)) unavailSection.classList.remove('drag-over');
-});
-unavailSection.addEventListener('drop', e => {
+unavailGrid.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+unavailGrid.addEventListener('drop', e => {
   e.preventDefault();
-  unavailSection.classList.remove('drag-over');
   if (draggingId !== null && !isUnavailable(draggingId)) {
     state.unavailableIds.push(draggingId);
+    unavailableSet.add(draggingId);
     draggingId = null;
     saveState(); renderRoster(); renderUnavailableRoster();
   }

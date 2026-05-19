@@ -108,7 +108,6 @@ header .subtitle { color: var(--text2); font-size: 12px; }
 .char-card.star-4 .star-badge { background: rgba(192,144,255,.85); color: #000; }
 .char-card.star-1 .star-badge { background: rgba(180,200,255,.7); color: #000; }
 .char-card.used { opacity: 0.4; filter: grayscale(50%); }
-.char-card.unavailable { opacity: 0.5; filter: grayscale(100%) brightness(0.7); }
 .elem-filters { display: flex; gap: 4px; flex-wrap: wrap; }
 .elem-chip {
   display: flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 10px;
@@ -217,10 +216,12 @@ const ELEM_KEY = {
   '热熔':'rerong','湮灭':'jielin','衍射':'yanshe'
 };
 const ELEM_LIST = ['冰凝','气动','导电','热熔','湮灭','衍射'];
+const CHAR_BY_ID = new Map(CHARACTERS.map(c => [c.id, c]));
 
 const PRESET_UNAVAILABLE_IDS = [4, 5, 6, 9, 10, 11, 13, 16, 17, 18, 19, 21, 22, 25, 29];
 
 let state = { teams: [], notes: [], unavailableIds: [] };
+let unavailableSet = new Set();
 let draggingId = null;
 let searchQ = '';
 let elemF = null;
@@ -248,12 +249,39 @@ function loadState() {
   state.unavailableIds = PRESET_UNAVAILABLE_IDS.slice();
 }
 
-function getChar(id) { return CHARACTERS.find(c => c.id === id); }
+function getChar(id) { return CHAR_BY_ID.get(id); }
 
-function isUnavailable(characterId) { return state.unavailableIds.includes(characterId); }
+function isUnavailable(characterId) { return unavailableSet.has(characterId); }
 
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function charCardHTML(c, extraClass, source) {
+  const ek = ELEM_KEY[c.element] || '';
+  const ic = ELEM_ICONS[ek] || '';
+  const init = c.name[0] || '?';
+  return `<div class="char-card star-${c.star}${extraClass}" draggable="true" data-id="${c.id}" data-source="${source}" title="${esc(c.name)}（${esc(c.element)}）">
+      <span class="star-badge">${c.star}★</span>
+      <img class="char-portrait" src="${c.img}" alt="${esc(c.name)}"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="char-initial">${init}</div>
+      <div class="char-footer">
+        <span class="char-name">${esc(c.name)}</span>
+        ${ic ? `<img class="elem-icon" src="${ic}" alt="${esc(c.element)}">` : ''}
+      </div>
+    </div>`;
+}
+
+function attachDragListeners(grid) {
+  grid.querySelectorAll('.char-card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      draggingId = parseInt(card.dataset.id);
+      e.dataTransfer.effectAllowed = 'all';
+      card.style.opacity = '.5';
+    });
+    card.addEventListener('dragend', () => { card.style.opacity = ''; draggingId = null; });
+  });
 }
 
 function renderElemFilters() {
@@ -285,59 +313,19 @@ function renderRoster() {
   const availCount = list.filter(c => (useCount[c.id] || 0) < (SUSTAIN_IDS.has(c.id) ? 2 : 1)).length;
   document.getElementById('rosterCount').textContent = availCount + ' 名可用 / ' + obtainedCount + ' 名已获得';
   grid.innerHTML = list.map(c => {
-    const ek = ELEM_KEY[c.element] || '';
-    const ic = ELEM_ICONS[ek] || '';
-    const init = c.name[0] || '?';
     const threshold = SUSTAIN_IDS.has(c.id) ? 2 : 1;
     const usedClass = (useCount[c.id] || 0) >= threshold ? ' used' : '';
-    return `<div class="char-card star-${c.star}${usedClass}" draggable="true" data-id="${c.id}" data-source="roster" title="${esc(c.name)}（${esc(c.element)}）">
-      <span class="star-badge">${c.star}★</span>
-      <img class="char-portrait" src="${c.img}" alt="${esc(c.name)}"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="char-initial">${init}</div>
-      <div class="char-footer">
-        <span class="char-name">${esc(c.name)}</span>
-        ${ic ? `<img class="elem-icon" src="${ic}" alt="${esc(c.element)}">` : ''}
-      </div>
-    </div>`;
+    return charCardHTML(c, usedClass, 'roster');
   }).join('');
-  grid.querySelectorAll('.char-card').forEach(card => {
-    card.addEventListener('dragstart', e => {
-      draggingId = parseInt(card.dataset.id);
-      e.dataTransfer.effectAllowed = 'all';
-      card.style.opacity = '.5';
-    });
-    card.addEventListener('dragend', () => { card.style.opacity = ''; });
-  });
+  attachDragListeners(grid);
 }
 
 function renderUnavailableRoster() {
   const unavailChars = CHARACTERS.filter(c => isUnavailable(c.id));
   const grid = document.getElementById('unavailable');
   document.getElementById('unavailableCount').textContent = unavailChars.length + ' / ' + CHARACTERS.length;
-  grid.innerHTML = unavailChars.map(c => {
-    const ek = ELEM_KEY[c.element] || '';
-    const ic = ELEM_ICONS[ek] || '';
-    const init = c.name[0] || '?';
-    return `<div class="char-card star-${c.star} unavailable" draggable="true" data-id="${c.id}" data-source="unavailable" title="${esc(c.name)}（${esc(c.element)}）">
-      <span class="star-badge">${c.star}★</span>
-      <img class="char-portrait" src="${c.img}" alt="${esc(c.name)}"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="char-initial">${init}</div>
-      <div class="char-footer">
-        <span class="char-name">${esc(c.name)}</span>
-        ${ic ? `<img class="elem-icon" src="${ic}" alt="${esc(c.element)}">` : ''}
-      </div>
-    </div>`;
-  }).join('');
-  grid.querySelectorAll('.char-card').forEach(card => {
-    card.addEventListener('dragstart', e => {
-      draggingId = parseInt(card.dataset.id);
-      e.dataTransfer.effectAllowed = 'all';
-      card.style.opacity = '.5';
-    });
-    card.addEventListener('dragend', () => { card.style.opacity = ''; });
-  });
+  grid.innerHTML = unavailChars.map(c => charCardHTML(c, ' unavailable', 'unavailable')).join('');
+  attachDragListeners(grid);
 }
 
 function renderSlot(ti, si, cid) {
@@ -406,7 +394,7 @@ function renderTeams() {
     btn.addEventListener('click', () => {
       const ti = +btn.dataset.team;
       state.teams.splice(ti, 1); state.notes.splice(ti, 1);
-      saveState(); renderTeams(); renderRoster(); updateAddBtn();
+      saveState(); renderTeams(); renderRoster();
     });
   });
 
@@ -419,6 +407,7 @@ function updateAddBtn() {
 }
 
 loadState();
+unavailableSet = new Set(state.unavailableIds);
 renderElemFilters();
 renderRoster();
 renderUnavailableRoster();
@@ -432,7 +421,7 @@ rosterGrid.addEventListener('drop', e => {
   e.preventDefault();
   if (draggingId !== null && isUnavailable(draggingId)) {
     const idx = state.unavailableIds.indexOf(draggingId);
-    if (idx > -1) state.unavailableIds.splice(idx, 1);
+    if (idx > -1) { state.unavailableIds.splice(idx, 1); unavailableSet.delete(draggingId); }
     draggingId = null;
     saveState(); renderRoster(); renderUnavailableRoster();
   }
@@ -443,6 +432,7 @@ unavailGrid.addEventListener('drop', e => {
   e.preventDefault();
   if (draggingId !== null && !isUnavailable(draggingId)) {
     state.unavailableIds.push(draggingId);
+    unavailableSet.add(draggingId);
     draggingId = null;
     saveState(); renderRoster(); renderUnavailableRoster();
   }
