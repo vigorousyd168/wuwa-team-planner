@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(openspec new *)",
+      "Bash(openspec status *)"
+    ]
+  },
+  "skillOverrides": {
+    "opsx:explore": "on",
+    "opsx:new": "on",
+    "opsx:propose": "on",
+    "opsx:continue": "on",
+    "opsx:apply": "on",
+    "opsx:verify": "on",
+    "opsx:sync": "on",
+    "opsx:archive": "on",
+    "openspec-explore": "on",
+    "openspec-new-change": "on",
+    "openspec-propose": "on",
+    "openspec-continue-change": "on",
+    "openspec-apply-change": "on",
+    "openspec-verify-change": "on",
+    "openspec-sync-specs": "on",
+    "openspec-archive-change": "on"
+  }
+}
