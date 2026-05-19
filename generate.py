@@ -1,12 +1,13 @@
-import json, sys, os, re
+import json, sys, os, re, pathlib
 sys.stdout.reconfigure(encoding='utf-8')
 
-IMG_DIR  = 'C:/MyWorkspace/wuwa-deck/wuwa-wiki/images'
-HTML_OUT = 'C:/MyWorkspace/wuwa-deck/index.html'
+BASE     = pathlib.Path(__file__).parent
+IMG_DIR  = BASE / 'wuwa-wiki' / 'images'
+HTML_OUT = BASE / 'index.html'
 IMG_REL  = './wuwa-wiki/images'  # relative path from index.html
 
 # ── Character data ────────────────────────────────────────────────────────────
-with open('C:/MyWorkspace/wuwa-deck/wuwa-wiki/characters.json', encoding='utf-8') as f:
+with open(BASE / 'wuwa-wiki' / 'characters.json', encoding='utf-8') as f:
     chars = json.load(f)
 
 SUSTAIN_NAMES = {'守岸人', '莫宁', '维里奈', '卜灵', '白芷'}
@@ -241,7 +242,7 @@ function loadState() {
         return;
       }
     }
-  } catch(e) {}
+  } catch(e) { console.warn('wuwa-deck: failed to load saved state, resetting.', e); }
   state.teams = Array.from({length: 6}, () => [null, null, null]);
   state.notes = Array(6).fill('');
   state.unavailableIds = PRESET_UNAVAILABLE_IDS.slice();
