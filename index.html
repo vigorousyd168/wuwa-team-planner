@@ -4,465 +4,737 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>鸣潮编队小助手</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0b0f1a; --bg2: #131928; --bg3: #1a2235;
-  --border: #2a3550; --accent: #00c8d4; --accent2: #0099a8;
-  --text: #e0e8f8; --text2: #8a9bc0; --danger: #ff4d6d; --slot-empty: #111827;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg); color: var(--text);
-  font-family: "Microsoft YaHei","PingFang SC",sans-serif;
-  font-size: 13px; height: 100vh; overflow: hidden;
-  display: flex; flex-direction: column;
-}
-header {
-  background: var(--bg2); border-bottom: 1px solid var(--border);
-  padding: 10px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-}
-header h1 { font-size: 16px; color: var(--accent); letter-spacing: 1px; font-weight: 600; }
-header .subtitle { color: var(--text2); font-size: 12px; }
-.layout { display: flex; flex: 1; overflow: hidden; }
-.sidebar {
-  flex: 1; min-width: 300px; background: var(--bg2);
-  border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden;
-}
-.sidebar-header {
-  padding: 10px 12px; border-bottom: 1px solid var(--border);
-  display: flex; flex-direction: column; gap: 8px;
-}
-.sidebar-header .row { display: flex; align-items: center; gap: 8px; }
-.sidebar-title { font-size: 13px; color: var(--text2); font-weight: 600; }
-#search {
-  flex: 1; background: var(--bg3); border: 1px solid var(--border);
-  color: var(--text); padding: 5px 10px; border-radius: 4px; font-size: 12px; outline: none;
-}
-#search:focus { border-color: var(--accent); }
-#search::placeholder { color: var(--text2); }
-.roster-grid {
-  flex: 1; overflow-y: auto; padding: 10px;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 8px; align-content: start;
-}
-.roster-grid::-webkit-scrollbar { width: 4px; }
-.roster-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-.char-card {
-  position: relative; cursor: grab; border-radius: 6px; overflow: hidden;
-  border: 1px solid var(--border); background: var(--bg3);
-  transition: border-color .15s, transform .1s; user-select: none;
-}
-.char-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-.char-card:active { cursor: grabbing; }
-.char-card img.char-portrait { width: 100%; height: auto; display: block; }
-.char-card .char-initial {
-  display: none; width: 100%; aspect-ratio: 3/4; background: var(--bg3);
-  align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: var(--accent);
-}
-.char-card .char-footer {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  padding: 3px 4px; display: flex; align-items: center; justify-content: space-between; gap: 2px;
-  background: rgba(0,0,0,.72);
-}
-.char-card .char-name {
-  font-size: 11px; color: #fff; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; flex: 1;
-}
-.char-card .elem-icon { width: 14px; height: 14px; flex-shrink: 0; }
-.char-card .star-badge {
-  position: absolute; top: 3px; right: 3px; font-size: 9px;
-  padding: 1px 3px; border-radius: 2px; font-weight: bold;
-}
-.char-card.star-5 .star-badge { background: rgba(255,215,0,.85); color: #000; }
-.char-card.star-4 .star-badge { background: rgba(192,144,255,.85); color: #000; }
-.char-card.star-1 .star-badge { background: rgba(180,200,255,.7); color: #000; }
-.char-card.used { opacity: 0.4; filter: grayscale(50%); }
-.elem-filters { display: flex; gap: 4px; flex-wrap: wrap; }
-.elem-chip {
-  display: flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 10px;
-  border: 1px solid var(--border); background: var(--bg3); cursor: pointer;
-  font-size: 11px; color: var(--text2); transition: all .15s;
-}
-.elem-chip.active,.elem-chip:hover { border-color: var(--accent); color: var(--text); }
-.elem-chip img { width: 12px; height: 12px; }
-.unavailable-section {
-  flex: 0 0 auto; border-top: 1px solid var(--border);
-  padding: 8px 12px; display: flex; flex-direction: column; gap: 6px;
-}
-.unavailable-header {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 12px; color: var(--text2); font-weight: 600;
-}
-.unavailable-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 8px; max-height: 140px; overflow-y: auto; min-height: 44px;
-}
-.unavail-empty {
-  grid-column: 1 / -1; min-height: 44px; border: 1px dashed var(--border);
-  border-radius: 4px; display: flex; align-items: center; justify-content: center;
-  color: var(--text2); font-size: 12px; pointer-events: none;
-}
-.unavailable-grid::-webkit-scrollbar { width: 4px; }
-.unavailable-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-.char-card.unavailable { opacity: 0.6; filter: grayscale(40%); }
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.teams-header {
-  padding: 10px 16px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 10px; background: var(--bg2); flex-shrink: 0;
-}
-.teams-header .title { font-size: 13px; color: var(--text2); font-weight: 600; flex: 1; }
-.teams-header .count { font-size: 12px; color: var(--text2); }
-.btn {
-  padding: 5px 12px; border-radius: 4px; border: 1px solid var(--border);
-  background: var(--bg3); color: var(--text); cursor: pointer; font-size: 12px;
-  transition: background .15s, border-color .15s;
-}
-.btn:hover { background: var(--accent2); border-color: var(--accent); color: #fff; }
-.btn:disabled { opacity: .4; cursor: not-allowed; }
-.btn.primary { background: var(--accent2); border-color: var(--accent); color: #fff; }
-.btn.primary:hover { background: var(--accent); }
-#teams {
-  flex: 1; overflow-y: auto; padding: 10px 16px;
-  display: flex; flex-direction: column; gap: 8px;
-}
-#teams::-webkit-scrollbar { width: 4px; }
-#teams::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-.team-row {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 12px; display: flex; align-items: center; gap: 10px; min-height: 88px;
-}
-.team-row:hover { border-color: #3a4a6a; }
-.team-label {
-  font-size: 12px; color: var(--text2); width: 46px;
-  flex-shrink: 0; text-align: center; line-height: 1.4;
-}
-.slot-group { display: flex; gap: 6px; flex-shrink: 0; }
-.slot {
-  width: 66px; height: 66px; border-radius: 6px; border: 1px dashed var(--border);
-  background: var(--slot-empty); position: relative; overflow: hidden;
-  transition: border-color .15s, background .15s;
-}
-.slot.drag-over { border-color: var(--accent); background: rgba(0,200,212,.08); border-style: solid; }
-.slot.empty { display: flex; align-items: center; justify-content: center; cursor: default; }
-.slot.empty .slot-plus { font-size: 22px; color: var(--border); line-height: 1; }
-.slot.empty.drag-over .slot-plus { color: var(--accent); }
-.slot.filled { border-style: solid; border-color: var(--border); }
-.slot.filled img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.slot .slot-name {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: rgba(0,0,0,.75); font-size: 10px; text-align: center;
-  padding: 2px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.slot-clear {
-  position: absolute; top: 2px; right: 2px; width: 16px; height: 16px;
-  background: rgba(0,0,0,.7); border: none; color: #fff; font-size: 10px;
-  border-radius: 50%; cursor: pointer; display: none;
-  align-items: center; justify-content: center; padding: 0; line-height: 1;
-}
-.slot.filled:hover .slot-clear { display: flex; }
-.slot-clear:hover { background: #ff4d6d; }
-.team-note {
-  width: 160px; flex-shrink: 0; background: var(--bg3); border: 1px solid var(--border); color: var(--text);
-  border-radius: 4px; padding: 6px 8px; font-size: 12px; resize: none; height: 66px;
-  outline: none; font-family: inherit; line-height: 1.5;
-}
-.team-note:focus { border-color: var(--accent); }
-.team-note::placeholder { color: var(--text2); }
-.team-delete {
-  flex-shrink: 0; width: 28px; height: 28px; background: transparent;
-  border: 1px solid transparent; color: var(--text2); font-size: 14px;
-  cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center;
-  transition: color .15s, border-color .15s;
-}
-.team-delete:hover { color: #ff4d6d; border-color: #ff4d6d; }
+html, body { margin: 0; padding: 0; height: 100%; background: #0a0e17; }
+* { box-sizing: border-box; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #283655; border-radius: 3px; }
+input::placeholder, textarea::placeholder { color: #5d6f96; }
+button { font-family: inherit; }
+@keyframes ccPulse {
+  0%, 100% { box-shadow: 0 0 0 1.5px rgba(63,214,228,.95), 0 0 12px rgba(63,214,228,.35); }
+  50%       { box-shadow: 0 0 0 1.5px rgba(63,214,228,.95), 0 0 24px rgba(63,214,228,.8); }
+}
+#app {
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+  background: radial-gradient(1100px 560px at 82% -12%, #15233f 0%, #0a0e17 58%);
+  color: #e4ecfc; font-family: 'Rajdhani','PingFang SC','Microsoft YaHei',sans-serif; font-size: 13px;
+}
+/* ── Header ─────────────────────────────────────────────────────── */
+header {
+  display: flex; align-items: center; gap: 14px; padding: 0 20px; height: 58px;
+  flex-shrink: 0; background: rgba(13,19,35,.85); border-bottom: 1px solid #1f2b47;
+}
+.hdr-diamond {
+  width: 12px; height: 12px; background: linear-gradient(135deg,#3fd6e4,#1690a4);
+  transform: rotate(45deg); box-shadow: 0 0 10px rgba(63,214,228,.6); flex-shrink: 0;
+}
+.hdr-titles { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.hdr-title  { font-size: 16px; font-weight: 600; letter-spacing: 2px; color: #eef4ff; white-space: nowrap; }
+.hdr-sub    { font-size: 10px; font-weight: 600; letter-spacing: 3px; color: #3fd6e4;  white-space: nowrap; }
+.hdr-stats  { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.stat-pill  {
+  display: flex; align-items: baseline; gap: 5px; padding: 4px 12px;
+  border: 1px solid #243154; border-radius: 999px; background: rgba(15,22,40,.7);
+  font-size: 12px; color: #8294b8; white-space: nowrap;
+}
+.stat-pill b { color: #3fd6e4; font-weight: 700; font-size: 14px; }
+/* ── Mobile tabs ─────────────────────────────────────────────────── */
+#mob-tabs {
+  display: none; flex-shrink: 0; border-bottom: 1px solid #1f2b47;
+  background: rgba(13,19,35,.85);
+}
+.mob-tab {
+  flex: 1; text-align: center; padding: 11px 8px; font-size: 13px; font-weight: 600;
+  letter-spacing: 1px; cursor: pointer; color: #8294b8; border-bottom: 2px solid transparent;
+  user-select: none;
+}
+.mob-tab.active { color: #3fd6e4; border-bottom-color: #3fd6e4; }
+/* ── Layout ──────────────────────────────────────────────────────── */
+#layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+/* ── Sidebar ─────────────────────────────────────────────────────── */
+aside {
+  display: flex; flex-direction: column; width: 372px; flex-shrink: 0; min-width: 0;
+  border-right: 1px solid #1f2b47; background: rgba(13,19,33,.6); overflow: hidden;
+}
+.sb-top { display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 12px; border-bottom: 1px solid #1f2b47; }
+.sb-row { display: flex; align-items: baseline; gap: 8px; }
+.sb-title { font-size: 14px; font-weight: 600; letter-spacing: 1px; color: #dfe9fb; }
+.sb-sub   { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #5d6f96; }
+.sb-count { margin-left: auto; font-size: 11px; color: #8294b8; white-space: nowrap; }
+#search {
+  width: 100%; background: #0e1526; border: 1px solid #243154; border-radius: 8px;
+  padding: 8px 12px; font-size: 13px; color: #e4ecfc; outline: none;
+  font-family: inherit; transition: border-color .15s;
+}
+#search:focus { border-color: #3fd6e4; }
+#elem-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px;
+  font-size: 12px; cursor: pointer; user-select: none; transition: all .15s;
+}
+.chip img { width: 13px; height: 13px; display: block; }
+/* ── Roster grid ─────────────────────────────────────────────────── */
+#roster {
+  flex: 1; overflow-y: auto; padding: 12px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  grid-auto-rows: max-content; gap: 10px; align-content: start; transition: background .15s;
+}
+#roster.rz-over { background: rgba(63,214,228,.05); }
+.cc {
+  position: relative; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden;
+  border: 1px solid #26334f; background: linear-gradient(180deg,#16213c 0%,#0d1426 100%);
+  cursor: pointer; user-select: none; transition: border-color .15s, transform .12s;
+}
+.cc:not(.used):hover { border-color: #3fd6e4; transform: translateY(-2px); }
+.cc.selected { border-color: #3fd6e4; animation: ccPulse 1.6s ease-in-out infinite; }
+.cc.used { opacity: .38; filter: grayscale(.7); cursor: default; }
+.cc img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.cc .cc-star {
+  position: absolute; top: 6px; left: 6px; padding: 1px 6px; border-radius: 4px;
+  font-size: 11px; font-weight: 700; color: #131725;
+}
+.cc.s5 .cc-star { background: linear-gradient(135deg,#ffd87a,#e8a93c); }
+.cc.s4 .cc-star { background: linear-gradient(135deg,#cfa8ff,#9f6cf0); }
+.cc .cc-sustain {
+  position: absolute; top: 6px; right: 6px; padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; font-weight: 700; background: rgba(63,220,171,.92); color: #06281e;
+}
+.cc .cc-foot {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; align-items: center; gap: 4px; padding: 14px 7px 5px;
+  background: linear-gradient(180deg,rgba(5,8,16,0) 0%,rgba(5,8,16,.92) 55%);
+}
+.cc .cc-name { flex: 1; font-size: 12px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc .cc-elem { width: 14px; height: 14px; flex-shrink: 0; }
+/* ── Unavailable section ─────────────────────────────────────────── */
+.unavail-sec {
+  flex-shrink: 0; display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 14px 12px; border-top: 1px solid #1f2b47; background: rgba(10,14,26,.55);
+}
+.unavail-sec-row { display: flex; align-items: baseline; gap: 8px; }
+.unavail-title  { font-size: 13px; font-weight: 600; letter-spacing: 1px; color: #aab8d6; }
+.unavail-sub    { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #5d6f96; }
+.unavail-cnt    { margin-left: auto; font-size: 11px; color: #8294b8; }
+#unavail-zone {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  grid-auto-rows: max-content; gap: 8px; max-height: 138px; overflow-y: auto;
+  min-height: 56px; border: 1px dashed #2a3858; border-radius: 10px; padding: 7px;
+  transition: border-color .15s, background .15s;
+}
+#unavail-zone.uz-over { border-color: #3fd6e4; background: rgba(63,214,228,.07); }
+.uz-empty {
+  grid-column: 1 / -1; min-height: 40px; display: flex; align-items: center;
+  justify-content: center; color: #5d6f96; font-size: 12px; pointer-events: none;
+}
+.uc {
+  position: relative; aspect-ratio: 3/4; border-radius: 8px; overflow: hidden;
+  border: 1px solid #243154; background: #0d1426; opacity: .62;
+  cursor: pointer; user-select: none; transition: opacity .15s, border-color .15s;
+}
+.uc:hover { opacity: 1; border-color: #3fd6e4; }
+.uc img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(.75); }
+.uc .uc-name {
+  position: absolute; bottom: 0; left: 0; right: 0; padding: 8px 4px 3px;
+  font-size: 10px; text-align: center; color: #cfdbf3; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  background: linear-gradient(180deg,rgba(5,8,16,0) 0%,rgba(5,8,16,.95) 60%);
+}
+.unavail-hint { font-size: 11px; color: #5d6f96; }
+/* ── Main ────────────────────────────────────────────────────────── */
+main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.teams-bar {
+  display: flex; align-items: center; gap: 12px; padding: 12px 18px;
+  border-bottom: 1px solid #1f2b47; flex-shrink: 0;
+}
+.teams-bar-left { display: flex; align-items: baseline; gap: 8px; }
+.teams-bar-title { font-size: 14px; font-weight: 600; letter-spacing: 1px; color: #dfe9fb; }
+.teams-bar-sub   { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #5d6f96; }
+.teams-bar-hint  { font-size: 12px; color: #8294b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#add-btn {
+  margin-left: auto; padding: 8px 18px; border-radius: 8px; border: none;
+  background: linear-gradient(135deg,#2ed3e2,#149aac); color: #03171b;
+  font-size: 13px; font-weight: 700; letter-spacing: 1px;
+  cursor: pointer; transition: filter .15s; white-space: nowrap; flex-shrink: 0;
+}
+#add-btn:hover:not(:disabled) { filter: brightness(1.12); }
+#add-btn:disabled { opacity: .4; cursor: not-allowed; }
+/* ── Selection banner ────────────────────────────────────────────── */
+#sel-banner {
+  display: none; align-items: center; gap: 12px; padding: 9px 18px; flex-shrink: 0;
+  background: rgba(63,214,228,.07); border-bottom: 1px solid rgba(63,214,228,.3); font-size: 12px;
+}
+.sel-dia { width: 8px; height: 8px; background: #3fd6e4; transform: rotate(45deg); flex-shrink: 0; box-shadow: 0 0 8px rgba(63,214,228,.8); }
+.sel-text { color: #bfeef4; }
+.sel-actions { margin-left: auto; display: flex; gap: 8px; }
+.sel-btn {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid #3a4a6e;
+  background: rgba(15,22,40,.8); color: #aab8d6; font-size: 12px; cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.sel-btn.mark:hover   { border-color: #ff5e7a; color: #ff8aa0; }
+.sel-btn.cancel:hover { border-color: #3fd6e4; color: #fff; }
+/* ── Teams list ──────────────────────────────────────────────────── */
+#teams {
+  flex: 1; overflow-y: auto; padding: 14px 18px 24px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.no-teams {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 8px; color: #5d6f96;
+}
+.no-teams-t { font-size: 15px; letter-spacing: 1px; }
+.no-teams-s { font-size: 12px; }
+.team-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px;
+  border-radius: 12px; border: 1px solid #22304e;
+  background: linear-gradient(180deg,rgba(21,30,54,.85) 0%,rgba(14,21,38,.85) 100%);
+  transition: border-color .15s, box-shadow .15s;
+}
+.team-row.tr-over { border-color: #3fd6e4; box-shadow: 0 0 0 1px rgba(63,214,228,.7), 0 0 18px rgba(63,214,228,.25); }
+.drag-handle {
+  cursor: grab; color: #51638f; font-size: 17px; padding: 6px 2px;
+  user-select: none; line-height: 1; flex-shrink: 0; transition: color .15s;
+}
+.drag-handle:hover { color: #3fd6e4; }
+.team-num { display: flex; flex-direction: column; align-items: center; width: 50px; flex-shrink: 0; }
+.team-num-label { font-size: 9px; font-weight: 600; letter-spacing: 2.5px; color: #5d6f96; }
+.team-num-val   { font-size: 22px; font-weight: 700; color: #3fd6e4; line-height: 1.1; }
+.slots { display: flex; gap: 8px; flex-shrink: 0; }
+.slot {
+  position: relative; width: 74px; height: 74px; border-radius: 10px; overflow: hidden;
+  border: 1px dashed #2a3858; background: #0c1322; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.slot.s-over   { border-color: #3fd6e4; border-style: solid; background: rgba(63,214,228,.1); }
+.slot.s-place  { border-color: rgba(63,214,228,.55); }
+.slot.s-filled { border-style: solid; border-color: #2a3858; background: #0d1426; }
+.slot-plus {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; font-size: 24px; color: #2a3858; user-select: none;
+}
+.slot.s-over .slot-plus, .slot.s-place .slot-plus { color: #3fd6e4; }
+.slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.slot-name {
+  position: absolute; bottom: 0; left: 0; right: 0; padding: 8px 4px 3px;
+  font-size: 10px; text-align: center; color: #fff; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  background: linear-gradient(180deg,rgba(5,8,16,0) 0%,rgba(5,8,16,.92) 60%);
+}
+.slot-clear {
+  position: absolute; top: 3px; right: 3px; width: 17px; height: 17px; border-radius: 50%;
+  border: none; background: rgba(4,7,14,.7); color: #cfdbf3; font-size: 10px; line-height: 1;
+  cursor: pointer; display: none; align-items: center; justify-content: center; padding: 0;
+  transition: background .15s, color .15s;
+}
+.slot.s-filled:hover .slot-clear { display: flex; }
+.slot-clear:hover { background: #ff4d6d; color: #fff; }
+.team-note {
+  flex: 1; min-width: 150px; height: 74px; background: #0d1424; border: 1px solid #243154;
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #cfdbf3; resize: none;
+  outline: none; line-height: 1.5; transition: border-color .15s;
+}
+.team-note:focus { border-color: #3fd6e4; }
+.team-del {
+  flex-shrink: 0; width: 30px; height: 30px; background: transparent;
+  border: 1px solid transparent; color: #5d6f96; font-size: 14px; cursor: pointer;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0;
+  transition: color .15s, border-color .15s;
+}
+.team-del:hover { color: #ff5e7a; border-color: #ff5e7a; }
+/* ── Mobile ──────────────────────────────────────────────────────── */
+@media (max-width: 780px) {
+  #mob-tabs { display: flex; }
+  aside { width: 100%; border-right: none; }
+  aside.m-hide, main.m-hide { display: none; }
+}
 </style>
 </head>
 <body>
-<header>
-  <h1>鸣潮编队小助手</h1>
-  <span class="subtitle">Wuthering Waves Team Builder</span>
-</header>
-<div class="layout">
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="row">
-        <span class="sidebar-title">角色库</span>
-        <span id="rosterCount" style="font-size:11px;color:var(--text2);margin-left:auto"></span>
-      </div>
-      <div class="row">
-        <input type="text" id="search" placeholder="搜索角色名称…">
-      </div>
-      <div class="elem-filters" id="elemFilters"></div>
+<div id="app">
+  <header>
+    <div class="hdr-diamond"></div>
+    <div class="hdr-titles">
+      <div class="hdr-title">鸣潮编队小助手</div>
+      <div class="hdr-sub">WUTHERING WAVES · TEAM BUILDER</div>
     </div>
-    <div id="roster" class="roster-grid"></div>
-    <div class="unavailable-section">
-      <div class="unavailable-header">
-        未获得 <span id="unavailableCount" style="margin-left:auto"></span>
+    <div class="hdr-stats">
+      <div class="stat-pill"><span>已获得</span><b id="h-owned">0</b><span>/ <span id="h-total">0</span></span></div>
+      <div class="stat-pill"><span>队伍</span><b id="h-teams">0</b><span>/ 20</span></div>
+    </div>
+  </header>
+
+  <div id="mob-tabs">
+    <div class="mob-tab" id="tab-roster" onclick="setTab('roster')">角色库 ROSTER</div>
+    <div class="mob-tab active" id="tab-teams" onclick="setTab('teams')">队伍 TEAMS</div>
+  </div>
+
+  <div id="layout">
+    <aside id="sidebar">
+      <div class="sb-top">
+        <div class="sb-row">
+          <span class="sb-title">角色库</span>
+          <span class="sb-sub">ROSTER</span>
+          <span class="sb-count" id="roster-count"></span>
+        </div>
+        <input type="text" id="search" placeholder="搜索角色 Search…">
+        <div id="elem-chips"></div>
       </div>
-      <div id="unavailable" class="unavailable-grid"></div>
-    </div>
-  </aside>
-  <main class="main">
-    <div class="teams-header">
-      <span class="title">队伍配置</span>
-      <span class="count" id="teamCount"></span>
-      <button class="btn primary" id="addTeam">+ 添加队伍</button>
-    </div>
-    <div id="teams"></div>
-  </main>
+      <div id="roster"></div>
+      <div class="unavail-sec">
+        <div class="unavail-sec-row">
+          <span class="unavail-title">未获得</span>
+          <span class="unavail-sub">UNOBTAINED</span>
+          <span class="unavail-cnt" id="unavail-count"></span>
+        </div>
+        <div id="unavail-zone"></div>
+        <div class="unavail-hint">点击卡片取回 · Click a card to restore</div>
+      </div>
+    </aside>
+
+    <main id="main">
+      <div class="teams-bar">
+        <div class="teams-bar-left">
+          <span class="teams-bar-title">队伍配置</span>
+          <span class="teams-bar-sub">TEAMS</span>
+        </div>
+        <span class="teams-bar-hint">拖动 ⠿ 调整顺序</span>
+        <button id="add-btn">＋ 添加队伍 ADD</button>
+      </div>
+      <div id="sel-banner">
+        <span class="sel-dia"></span>
+        <span class="sel-text">已选择 <strong id="sel-name"></strong> — 点击队伍空位放入 · Tap an empty slot to place</span>
+        <div class="sel-actions">
+          <button class="sel-btn mark" id="sel-mark">标记为未获得</button>
+          <button class="sel-btn cancel" id="sel-cancel">取消 ✕</button>
+        </div>
+      </div>
+      <div id="teams"></div>
+    </main>
+  </div>
 </div>
 <script>
 const CHARACTERS = [{"id": 1, "name": "绯雪", "element": "冰凝", "star": 5, "img": "./wuwa-wiki/images/e56693dc98c34f5ea0d39882609eb69e20260401.png"}, {"id": 2, "name": "尤诺", "element": "气动", "star": 5, "img": "./wuwa-wiki/images/c1f5c6e86e334b969b1e3053b41aa65220250731.png"}, {"id": 3, "name": "莫宁", "element": "热熔", "star": 5, "img": "./wuwa-wiki/images/5ce94b857059492b853384b31a7428eb20251202.png", "sustain": true}, {"id": 4, "name": "达妮娅", "element": "热熔", "star": 5, "img": "./wuwa-wiki/images/39ff294b77b24c60b4cad18771f8fec120260401.png"}, {"id": 5, "name": "西格莉卡", "element": "气动", "star": 5, "img": "./wuwa-wiki/images/b372dc4cc3ca4b079f22eb6132d4e30f20260309.png"}, {"id": 6, "name": "陆·赫斯", "element": "衍射", "star": 5, "img": "./wuwa-wiki/images/04511230b90d4484b3c4ce9dc0d33ed720260107.png"}, {"id": 7, "name": "爱弥斯", "element": "热熔", "star": 5, "img": "./wuwa-wiki/images/fa87669167e74820a3fbd07560ef5a6b20260107.png"}, {"id": 8, "name": "琳奈", "element": "衍射", "star": 5, "img": "./wuwa-wiki/images/845bafa744aa42ccb044e681be8a994520251202.png"}, {"id": 9, "name": "千咲", "element": "湮灭", "star": 5, "img": "./wuwa-wiki/images/d6521c51e1214dc4876cb95226d6de2f20251019.png"}, {"id": 10, "name": "仇远", "element": "气动", "star": 5, "img": "./wuwa-wiki/images/9b30e13fb66441f78944cd37b02e3d8120250910.png"}, {"id": 11, "name": "嘉贝莉娜", "element": "热熔", "star": 5, "img": "./wuwa-wiki/images/e08663b392184c70b39486bff06aeb7b20250910.png"}, {"id": 12, "name": "奥古斯塔", "element": "导电", "star": 5, "img": "./wuwa-wiki/images/c261470300d44a1a9e04ba5f5b44e28720250731.png"}, {"id": 13, "name": "弗洛洛", "element": "湮灭", "star": 5, "img": "./wuwa-wiki/images/2da68a4331e946eebac3f154ef0a0a1520250623.png"}, {"id": 14, "name": "露帕", "element": "热熔", "star": 5, "img": "./wuwa-wiki/images/cdfac10b11d847fa829ba7778a2e365d20250509.png"}, {"id": 15, "name": "卡提希娅", "element": "气动", "star": 5, "img": "./wuwa-wiki/images/fca963574cae4a4dbb2b6a0bd46178e220250509.png"}, {"id": 16, "name": "夏空", "element": "气动", "star": 5, "img": "./wuwa-wiki/images/b15a18a438754a54bb81429831ea927020250404.png"}, {"id": 17, "name": "赞妮", "element": "衍射", "star": 5, "img": "./wuwa-wiki/images/2aa87c7266e248c1b5373675c603047920241122.png"}, {"id": 18, "name": "坎特蕾拉", "element": "湮灭", "star": 5, "img": "./wuwa-wiki/images/add8e2754a444e43a06672c2af8765fb20250221.png"}, {"id": 19, "name": "菲比", "element": "衍射", "star": 5, "img": "./wuwa-wiki/images/3cdcf320431a47098c8cf70ab52bdea220250110.png"}, {"id": 20, "name": "布兰特", "element": "热熔", "star": 5, "img": "./wuwa-wiki/images/e6815fe9d28b45c0b9be0af7a902a3d320241122.png"}, {"id": 21, "name": "洛可可", "element": "湮灭", "star": 5, "img": "./wuwa-wiki/images/223abbd525d34a2ebabb042460e9184c20241125.png"}, {"id": 22, "name": "珂莱塔", "element": "冰凝", "star": 5, "img": "./wuwa-wiki/images/0a4ef56e74564a1f986e6743c14dc29320241124.png"}, {"id": 23, "name": "椿", "element": "湮灭", "star": 5, "img": "./wuwa-wiki/images/574dd26f1d3e4518a59860d32dfd3f2620240912.png"}, {"id": 24, "name": "守岸人", "element": "衍射", "star": 5, "img": "./wuwa-wiki/images/f659feab4e494c31acf68246a172324420240811.png", "sustain": true}, {"id": 25, "name": "折枝", "element": "冰凝", "star": 5, "img": "./wuwa-wiki/images/91471558ec4c41eb86eb6ae151ac56b620240811.png"}, {"id": 26, "name": "相里要", "element": "导电", "star": 5, "img": "./wuwa-wiki/images/c575cb08352940e690305ec0006d200e20240811.png"}, {"id": 27, "name": "长离", "element": "热熔", "star": 5, "img": "./wuwa-wiki/images/aeff180b9bd4413ead67e9222101594120240811.png"}, {"id": 28, "name": "今汐", "element": "衍射", "star": 5, "img": "./wuwa-wiki/images/5e1a5b33dbb54cf9a218ce489183689720240811.png"}, {"id": 29, "name": "吟霖", "element": "导电", "star": 5, "img": "./wuwa-wiki/images/53a5e352ef56496eb0a8a7d6eb43327420240606.png"}, {"id": 30, "name": "忌炎", "element": "气动", "star": 5, "img": "./wuwa-wiki/images/181ae6af195245f288248482021c5e2020240811.png"}, {"id": 31, "name": "漂泊者-女-气动", "element": "气动", "star": 5, "img": "./wuwa-wiki/images/4008d90f2ed145ef8bd1f079a5abc98820250327.png"}, {"id": 32, "name": "漂泊者-男-气动", "element": "气动", "star": 5, "img": "./wuwa-wiki/images/4f1867f376234bf8b012592e1c23b9af20250327.png"}, {"id": 33, "name": "鉴心", "element": "气动", "star": 5, "img": "./wuwa-wiki/images/f2fa4561784645c684c235a19cb132cc20240811.png"}, {"id": 34, "name": "卡卡罗", "element": "导电", "star": 5, "img": "./wuwa-wiki/images/72c28c341efb48b187389d37fc2c2dc320240811.png"}, {"id": 35, "name": "安可", "element": "热熔", "star": 5, "img": "./wuwa-wiki/images/514a598770ef451e847aacf7783b7b6e20240811.png"}, {"id": 36, "name": "维里奈", "element": "衍射", "star": 5, "img": "./wuwa-wiki/images/1ab02beb5a7043de834e2f34cffa45ec20240811.png", "sustain": true}, {"id": 37, "name": "凌阳", "element": "冰凝", "star": 5, "img": "./wuwa-wiki/images/b70978c32d874946837c502621a9caa720240811.png"}, {"id": 38, "name": "漂泊者-男-衍射", "element": "衍射", "star": 5, "img": "./wuwa-wiki/images/987ea840e0034091b409e4a5b7d320d120240527.png"}, {"id": 39, "name": "漂泊者-女-衍射", "element": "衍射", "star": 5, "img": "./wuwa-wiki/images/b44dad638ce6498284fb5b569c0a2ed720240527.png"}, {"id": 40, "name": "漂泊者-男-湮灭", "element": "湮灭", "star": 5, "img": "./wuwa-wiki/images/4a17be9c00854f9ca85f4b460b32653f20240527.png"}, {"id": 41, "name": "漂泊者-女-湮灭", "element": "湮灭", "star": 5, "img": "./wuwa-wiki/images/b406ac3876794ec6bbfe538fbe40ae4220240527.png"}, {"id": 42, "name": "卜灵", "element": "导电", "star": 4, "img": "./wuwa-wiki/images/cedc0919cf7645b7935d79b98eaf868320251019.png", "sustain": true}, {"id": 43, "name": "灯灯", "element": "导电", "star": 4, "img": "./wuwa-wiki/images/8e451789792d4b80963a4af5e562a39e20240913.png"}, {"id": 44, "name": "秧秧", "element": "气动", "star": 4, "img": "./wuwa-wiki/images/71ccca4b6d404fa29d4b5d92b3edf9e220240811.png"}, {"id": 45, "name": "釉瑚", "element": "冰凝", "star": 4, "img": "./wuwa-wiki/images/6245a5688a724a9287b9f4648d2237ff20240811.png"}, {"id": 46, "name": "白芷", "element": "冰凝", "star": 4, "img": "./wuwa-wiki/images/0a6c256bdd5c4865bc316b110eca7d7520240811.png", "sustain": true}, {"id": 47, "name": "炽霞", "element": "热熔", "star": 4, "img": "./wuwa-wiki/images/bfc70389677040df9bb38fe9846c2da620240811.png"}, {"id": 48, "name": "散华", "element": "冰凝", "star": 4, "img": "./wuwa-wiki/images/76e37020ebd74c2f84ec259cebfc4cbc20240811.png"}, {"id": 49, "name": "秋水", "element": "气动", "star": 4, "img": "./wuwa-wiki/images/789c311de4f64aa99b41c47e07d0aa9a20240811.png"}, {"id": 50, "name": "丹瑾", "element": "湮灭", "star": 4, "img": "./wuwa-wiki/images/f013edb8b3f94e749c203e5fdf73d68a20240811.png"}, {"id": 51, "name": "莫特斐", "element": "热熔", "star": 4, "img": "./wuwa-wiki/images/f9630aec9f9b47079a886235a5ce2ab920240811.png"}, {"id": 52, "name": "渊武", "element": "导电", "star": 4, "img": "./wuwa-wiki/images/f16e8882159540bab4e646b0729942d920240811.png"}, {"id": 53, "name": "桃祈", "element": "湮灭", "star": 4, "img": "./wuwa-wiki/images/4eb3a10a888b47fdb8bff1ac3114b2e720240811.png"}];
 const ELEM_ICONS = {"bingning": "./wuwa-wiki/images/ico-catalog-role-attr-bingning-bfb551a6.png", "daodian": "./wuwa-wiki/images/ico-catalog-role-attr-daodian-d780a0e5.png", "jielin": "./wuwa-wiki/images/ico-catalog-role-attr-jielin-1ef135d7.png", "qidong": "./wuwa-wiki/images/ico-catalog-role-attr-qidong-91a66080.png", "rerong": "./wuwa-wiki/images/ico-catalog-role-attr-rerong-70e24f32.png", "yanshe": "./wuwa-wiki/images/ico-catalog-role-attr-yanshe-6478910f.png"};
 
-const ELEM_KEY = {
-  '冰凝':'bingning','气动':'qidong','导电':'daodian',
-  '热熔':'rerong','湮灭':'jielin','衍射':'yanshe'
+const ELEM_MAP = {
+  '冰凝': { key: 'bingning', color: '#56b7ff' },
+  '气动': { key: 'qidong',   color: '#3fdcab' },
+  '导电': { key: 'daodian',  color: '#b88cff' },
+  '热熔': { key: 'rerong',   color: '#ff8a4d' },
+  '湮灭': { key: 'jielin',   color: '#ff6597' },
+  '衍射': { key: 'yanshe',   color: '#ffd35e' }
 };
-const ELEM_LIST = ['冰凝','气动','导电','热熔','湮灭','衍射'];
-const CHAR_BY_ID = new Map(CHARACTERS.map(c => [c.id, c]));
-
-const PRESET_UNAVAILABLE_IDS = [4, 5, 6, 9, 10, 11, 13, 16, 17, 18, 19, 21, 22, 25, 29];
+const ELEM_ORDER = ['冰凝','气动','导电','热熔','湮灭','衍射'];
+const BY_ID = new Map(CHARACTERS.map(c => [c.id, c]));
+const PRESET_UNAVAIL = [4,5,6,9,10,11,13,16,17,18,19,21,22,25,29];
 
 let state = { teams: [], notes: [], unavailableIds: [] };
-let unavailableSet = new Set();
-let draggingId = null;
-let searchQ = '';
-let elemF = null;
+let unavailSet = new Set();
+let dragId = null, dragFrom = null, dragTeam = null;
+let selId = null;
+let searchQ = '', elemF = null;
+let activeTab = 'teams';
 
-function saveState() {
+/* ── persistence ── */
+function save() {
   localStorage.setItem('wuwa-deck-state', JSON.stringify(state));
 }
-
-function loadState() {
+function load() {
   try {
     const raw = localStorage.getItem('wuwa-deck-state');
     if (raw) {
       const p = JSON.parse(raw);
       if (Array.isArray(p.teams) && p.teams.length) {
-        state.teams = p.teams;
-        state.notes = Array.isArray(p.notes) ? p.notes : Array(p.teams.length).fill('');
+        state.teams = p.teams.map(r => [r[0]??null, r[1]??null, r[2]??null]);
+        state.notes = Array.isArray(p.notes) ? p.notes.slice() : [];
         while (state.notes.length < state.teams.length) state.notes.push('');
-        state.unavailableIds = Array.isArray(p.unavailableIds) ? p.unavailableIds : PRESET_UNAVAILABLE_IDS.slice();
+        state.unavailableIds = Array.isArray(p.unavailableIds) ? p.unavailableIds.slice() : PRESET_UNAVAIL.slice();
         return;
       }
     }
-  } catch(e) { console.warn('wuwa-deck: failed to load saved state, resetting.', e); }
-  state.teams = Array.from({length: 6}, () => [null, null, null]);
+  } catch(e) { console.warn('wuwa-deck: load failed', e); }
+  state.teams = Array.from({length: 6}, () => [null,null,null]);
   state.notes = Array(6).fill('');
-  state.unavailableIds = PRESET_UNAVAILABLE_IDS.slice();
+  state.unavailableIds = PRESET_UNAVAIL.slice();
 }
 
-function getChar(id) { return CHAR_BY_ID.get(id); }
-
-function isUnavailable(characterId) { return unavailableSet.has(characterId); }
-
+/* ── helpers ── */
+function useCounts() {
+  const m = {};
+  state.teams.flat().forEach(id => { if (id != null) m[id] = (m[id]||0) + 1; });
+  return m;
+}
+function threshold(c) { return c.sustain ? 2 : 1; }
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function charCardHTML(c, extraClass, source) {
-  const ek = ELEM_KEY[c.element] || '';
-  const ic = ELEM_ICONS[ek] || '';
-  const init = c.name[0] || '?';
-  return `<div class="char-card star-${c.star}${extraClass}" draggable="true" data-id="${c.id}" data-source="${source}" title="${esc(c.name)}（${esc(c.element)}）">
-      <span class="star-badge">${c.star}★</span>
-      <img class="char-portrait" src="${c.img}" alt="${esc(c.name)}"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="char-initial">${init}</div>
-      <div class="char-footer">
-        <span class="char-name">${esc(c.name)}</span>
-        ${ic ? `<img class="elem-icon" src="${ic}" alt="${esc(c.element)}">` : ''}
-      </div>
-    </div>`;
+/* ── mutations ── */
+function place(ti, si, id) {
+  state.teams[ti][si] = id; selId = null;
+  save(); renderAll();
+}
+function clearSlot(ti, si) {
+  state.teams[ti][si] = null; save(); renderAll();
+}
+function markUnavailable(id) {
+  if (unavailSet.has(id)) return;
+  state.unavailableIds.push(id); unavailSet.add(id);
+  if (selId === id) selId = null;
+  save(); renderAll();
+}
+function restore(id) {
+  const i = state.unavailableIds.indexOf(id);
+  if (i > -1) state.unavailableIds.splice(i, 1);
+  unavailSet.delete(id); save(); renderAll();
+}
+function moveTeam(from, to) {
+  if (from === to) return;
+  const [t] = state.teams.splice(from, 1);
+  const [n] = state.notes.splice(from, 1);
+  state.teams.splice(to, 0, t);
+  state.notes.splice(to, 0, n);
+  save(); renderAll();
 }
 
-function attachDragListeners(grid) {
-  grid.querySelectorAll('.char-card').forEach(card => {
-    card.addEventListener('dragstart', e => {
-      draggingId = parseInt(card.dataset.id);
-      e.dataTransfer.effectAllowed = 'all';
-      card.style.opacity = '.5';
-    });
-    card.addEventListener('dragend', () => { card.style.opacity = ''; draggingId = null; });
-  });
+/* ── render ── */
+function renderHeader() {
+  const owned = CHARACTERS.filter(c => !unavailSet.has(c.id)).length;
+  document.getElementById('h-owned').textContent = owned;
+  document.getElementById('h-total').textContent = CHARACTERS.length;
+  document.getElementById('h-teams').textContent = state.teams.length;
 }
 
-function renderElemFilters() {
-  const el = document.getElementById('elemFilters');
-  el.innerHTML = ELEM_LIST.map(e => {
-    const ek = ELEM_KEY[e] || '';
-    const ic = ELEM_ICONS[ek] || '';
-    return `<div class="elem-chip${elemF===e?' active':''}" data-elem="${e}">`+
-      (ic ? `<img src="${ic}" alt="${e}">` : '') + e + '</div>';
+function renderElemChips() {
+  const el = document.getElementById('elem-chips');
+  el.innerHTML = ELEM_ORDER.map(name => {
+    const e = ELEM_MAP[name];
+    const active = elemF === name;
+    const border = active ? e.color : '#243154';
+    const bg     = active ? e.color + '26' : '#0e1526';
+    const color  = active ? '#ffffff' : '#8294b8';
+    const ic = ELEM_ICONS[e.key] || '';
+    return `<div class="chip" data-elem="${esc(name)}" style="border:1px solid ${border};background:${bg};color:${color}">` +
+      (ic ? `<img src="${esc(ic)}" alt="">` : '') +
+      `<span>${esc(name)}</span></div>`;
   }).join('');
-  el.querySelectorAll('.elem-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      elemF = elemF === chip.dataset.elem ? null : chip.dataset.elem;
-      renderElemFilters(); renderRoster();
+  el.querySelectorAll('.chip').forEach(ch => {
+    ch.addEventListener('click', () => {
+      elemF = elemF === ch.dataset.elem ? null : ch.dataset.elem;
+      renderElemChips(); renderRoster();
     });
   });
 }
 
 function renderRoster() {
-  const SUSTAIN_IDS = new Set(CHARACTERS.filter(c => c.sustain).map(c => c.id));
-  const useCount = {};
-  state.teams.flat().filter(Boolean).forEach(id => { useCount[id] = (useCount[id] || 0) + 1; });
+  const counts = useCounts();
+  const owned = CHARACTERS.filter(c => !unavailSet.has(c.id));
+  const avail = owned.filter(c => (counts[c.id]||0) < threshold(c));
+  document.getElementById('roster-count').textContent = avail.length + ' 可用 / ' + owned.length + ' 已获得';
 
-  const obtainedCount = CHARACTERS.filter(c => !isUnavailable(c.id)).length;
-  const list = CHARACTERS.filter(c =>
-    !isUnavailable(c.id) && (!searchQ || c.name.includes(searchQ)) && (!elemF || c.element === elemF)
-  );
+  const filtered = owned
+    .filter(c => !searchQ || c.name.includes(searchQ))
+    .filter(c => !elemF || c.element === elemF);
+
   const grid = document.getElementById('roster');
-  const availCount = list.filter(c => (useCount[c.id] || 0) < (SUSTAIN_IDS.has(c.id) ? 2 : 1)).length;
-  document.getElementById('rosterCount').textContent = availCount + ' 名可用 / ' + obtainedCount + ' 名已获得';
-  grid.innerHTML = list.map(c => {
-    const threshold = SUSTAIN_IDS.has(c.id) ? 2 : 1;
-    const usedClass = (useCount[c.id] || 0) >= threshold ? ' used' : '';
-    return charCardHTML(c, usedClass, 'roster');
+  grid.innerHTML = filtered.map(c => {
+    const e = ELEM_MAP[c.element] || {};
+    const ic = ELEM_ICONS[e.key] || '';
+    const full = (counts[c.id]||0) >= threshold(c);
+    const sel  = selId === c.id;
+    let cls = 'cc s' + c.star;
+    if (full) cls += ' used';
+    if (sel)  cls += ' selected';
+    return `<div class="${cls}" data-id="${c.id}" ${!full ? 'draggable="true"' : ''}
+      title="${esc(c.name)}（${esc(c.element)} · ${c.star}★）${full ? '已编入上限' : '点击选择或拖入队伍'}">
+      <img src="${esc(c.img)}" alt="${esc(c.name)}" draggable="false">
+      <span class="cc-star">${c.star}★</span>
+      ${c.sustain ? '<span class="cc-sustain">辅 ×2</span>' : ''}
+      <div class="cc-foot">
+        <span class="cc-name">${esc(c.name)}</span>
+        ${ic ? `<img class="cc-elem" src="${esc(ic)}" alt="">` : ''}
+      </div>
+    </div>`;
   }).join('');
-  attachDragListeners(grid);
+
+  grid.querySelectorAll('.cc:not(.used)').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      dragId = parseInt(card.dataset.id); dragFrom = 'roster';
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', String(dragId)); } catch(_) {}
+    });
+    card.addEventListener('dragend', () => {
+      dragId = null; dragFrom = null;
+      grid.classList.remove('rz-over');
+    });
+    card.addEventListener('click', () => {
+      const id = parseInt(card.dataset.id);
+      selId = selId === id ? null : id;
+      if (selId !== null && isMobile()) setTab('teams');
+      renderRoster(); renderTeams(); renderSelBanner();
+    });
+  });
 }
 
-function renderUnavailableRoster() {
-  const unavailChars = CHARACTERS.filter(c => isUnavailable(c.id));
-  const grid = document.getElementById('unavailable');
-  document.getElementById('unavailableCount').textContent = unavailChars.length + ' / ' + CHARACTERS.length;
-  if (unavailChars.length === 0) {
-    grid.innerHTML = '<div class="unavail-empty">拖入角色以标记为未获得</div>';
+function renderUnavail() {
+  const chars = CHARACTERS.filter(c => unavailSet.has(c.id));
+  document.getElementById('unavail-count').textContent = chars.length + ' / ' + CHARACTERS.length;
+  const zone = document.getElementById('unavail-zone');
+  if (chars.length === 0) {
+    zone.innerHTML = '<div class="uz-empty">拖入角色以标记为未获得</div>';
+    return;
+  }
+  zone.innerHTML = chars.map(c =>
+    `<div class="uc" data-id="${c.id}" draggable="true" title="${esc(c.name)} — 点击取回到角色库">
+      <img src="${esc(c.img)}" alt="${esc(c.name)}" draggable="false">
+      <div class="uc-name">${esc(c.name)}</div>
+    </div>`
+  ).join('');
+  zone.querySelectorAll('.uc').forEach(card => {
+    card.addEventListener('click', () => restore(parseInt(card.dataset.id)));
+    card.addEventListener('dragstart', e => {
+      dragId = parseInt(card.dataset.id); dragFrom = 'unavail';
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', String(dragId)); } catch(_) {}
+    });
+    card.addEventListener('dragend', () => {
+      dragId = null; dragFrom = null;
+      zone.classList.remove('uz-over');
+    });
+  });
+}
+
+function renderSelBanner() {
+  const banner = document.getElementById('sel-banner');
+  if (selId != null) {
+    const c = BY_ID.get(selId);
+    document.getElementById('sel-name').textContent = c ? c.name : '';
+    banner.style.display = 'flex';
   } else {
-    grid.innerHTML = unavailChars.map(c => charCardHTML(c, ' unavailable', 'unavailable')).join('');
-    attachDragListeners(grid);
+    banner.style.display = 'none';
   }
 }
 
 function renderSlot(ti, si, cid) {
-  const char = cid ? getChar(cid) : null;
-  if (!char) return `<div class="slot empty" data-slot="${si}"><span class="slot-plus">+</span></div>`;
-  return `<div class="slot filled" data-slot="${si}">
-    <img src="${char.img}" alt="${esc(char.name)}" onerror="this.style.display='none'">
-    <span class="slot-name">${esc(char.name)}</span>
-    <button class="slot-clear" data-team="${ti}" data-slot="${si}">×</button>
+  const c = cid != null ? BY_ID.get(cid) : null;
+  if (!c) {
+    return `<div class="slot" data-si="${si}"><div class="slot-plus">＋</div></div>`;
+  }
+  return `<div class="slot s-filled" data-si="${si}">
+    <img src="${esc(c.img)}" alt="${esc(c.name)}">
+    <div class="slot-name">${esc(c.name)}</div>
+    <button class="slot-clear" data-ti="${ti}" data-si="${si}">✕</button>
   </div>`;
 }
 
 function renderTeams() {
   const container = document.getElementById('teams');
-  container.innerHTML = state.teams.map((slots, ti) =>
-    `<div class="team-row" data-team="${ti}">
-      <div class="team-label">队伍<br>${ti + 1}</div>
-      <div class="slot-group">${slots.map((cid,si) => renderSlot(ti,si,cid)).join('')}</div>
-      <textarea class="team-note" data-team="${ti}" placeholder="队伍备注…">${esc(state.notes[ti]||'')}</textarea>
-      <button class="team-delete" data-team="${ti}" title="删除此队伍">✕</button>
-    </div>`
-  ).join('');
+  const addBtn = document.getElementById('add-btn');
 
+  if (state.teams.length === 0) {
+    container.innerHTML = `<div class="no-teams">
+      <div class="no-teams-t">还没有队伍</div>
+      <div class="no-teams-s">点击右上角「添加队伍」开始编队</div>
+    </div>`;
+    addBtn.disabled = false;
+    addBtn.style.opacity = '1';
+    return;
+  }
+
+  container.innerHTML = state.teams.map((slots, ti) => {
+    const num = ('0' + (ti + 1)).slice(-2);
+    return `<div class="team-row" data-ti="${ti}">
+      <div class="drag-handle" draggable="true" data-ti="${ti}" title="拖动排序">⠿</div>
+      <div class="team-num">
+        <span class="team-num-label">TEAM</span>
+        <span class="team-num-val">${num}</span>
+      </div>
+      <div class="slots">${slots.map((cid, si) => renderSlot(ti, si, cid)).join('')}</div>
+      <textarea class="team-note" data-ti="${ti}" placeholder="队伍备注 Notes…">${esc(state.notes[ti]||'')}</textarea>
+      <button class="team-del" data-ti="${ti}" title="删除此队伍">✕</button>
+    </div>`;
+  }).join('');
+
+  /* slot events */
   container.querySelectorAll('.slot').forEach(slot => {
+    const row = slot.closest('.team-row');
+    slot.addEventListener('click', () => {
+      if (selId != null) place(parseInt(row.dataset.ti), parseInt(slot.dataset.si), selId);
+    });
     slot.addEventListener('dragover', e => {
-      if (draggingId !== null && !isUnavailable(draggingId)) {
-        e.preventDefault();
-        slot.classList.add('drag-over');
-        e.dataTransfer.dropEffect = 'move';
-      } else if (draggingId !== null) {
-        e.dataTransfer.dropEffect = 'none';
+      if (dragId != null && dragFrom === 'roster') {
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+        slot.classList.add('s-over');
       }
     });
     slot.addEventListener('dragleave', e => {
-      if (!slot.contains(e.relatedTarget)) slot.classList.remove('drag-over');
+      if (!slot.contains(e.relatedTarget)) slot.classList.remove('s-over');
     });
     slot.addEventListener('drop', e => {
-      e.preventDefault();
-      slot.classList.remove('drag-over');
-      if (draggingId !== null && !isUnavailable(draggingId)) {
-        const ti = parseInt(slot.closest('.team-row').dataset.team);
-        const si = parseInt(slot.dataset.slot);
-        state.teams[ti][si] = draggingId;
-        draggingId = null;
-        saveState(); renderTeams(); renderRoster();
-      }
+      e.preventDefault(); slot.classList.remove('s-over');
+      if (dragId != null && dragFrom === 'roster')
+        place(parseInt(row.dataset.ti), parseInt(slot.dataset.si), dragId);
+      dragId = null; dragFrom = null;
     });
   });
 
+  /* slot-clear events */
   container.querySelectorAll('.slot-clear').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      state.teams[+btn.dataset.team][+btn.dataset.slot] = null;
-      saveState(); renderTeams(); renderRoster();
+      clearSlot(parseInt(btn.dataset.ti), parseInt(btn.dataset.si));
     });
   });
 
+  /* note events */
   container.querySelectorAll('.team-note').forEach(ta => {
     ta.addEventListener('input', () => {
-      state.notes[+ta.dataset.team] = ta.value;
-      saveState();
+      state.notes[parseInt(ta.dataset.ti)] = ta.value; save();
     });
   });
 
-  container.querySelectorAll('.team-delete').forEach(btn => {
+  /* delete events */
+  container.querySelectorAll('.team-del').forEach(btn => {
     btn.addEventListener('click', () => {
-      const ti = +btn.dataset.team;
+      const ti = parseInt(btn.dataset.ti);
       state.teams.splice(ti, 1); state.notes.splice(ti, 1);
-      saveState(); renderTeams(); renderRoster();
+      save(); renderAll();
     });
   });
 
-  document.getElementById('teamCount').textContent = state.teams.length + ' / 20 队';
-  updateAddBtn();
+  /* drag-handle (team reorder) */
+  container.querySelectorAll('.drag-handle').forEach(handle => {
+    handle.addEventListener('dragstart', e => {
+      dragTeam = parseInt(handle.dataset.ti);
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', 'team-' + dragTeam); } catch(_) {}
+    });
+    handle.addEventListener('dragend', () => {
+      dragTeam = null;
+      container.querySelectorAll('.team-row').forEach(r => r.classList.remove('tr-over'));
+    });
+  });
+
+  /* team-row drag-over for reordering */
+  container.querySelectorAll('.team-row').forEach(row => {
+    row.addEventListener('dragover', e => {
+      if (dragTeam != null) {
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+        container.querySelectorAll('.team-row').forEach(r => r.classList.remove('tr-over'));
+        row.classList.add('tr-over');
+      }
+    });
+    row.addEventListener('dragleave', e => {
+      if (!row.contains(e.relatedTarget)) row.classList.remove('tr-over');
+    });
+    row.addEventListener('drop', e => {
+      e.preventDefault(); row.classList.remove('tr-over');
+      if (dragTeam != null) { moveTeam(dragTeam, parseInt(row.dataset.ti)); dragTeam = null; }
+    });
+  });
+
+  /* mark empty slots as placeable */
+  if (selId != null) {
+    container.querySelectorAll('.slot:not(.s-filled)').forEach(s => s.classList.add('s-place'));
+  }
+
+  addBtn.disabled = state.teams.length >= 20;
+  addBtn.style.opacity = state.teams.length >= 20 ? '0.4' : '1';
 }
 
-function updateAddBtn() {
-  document.getElementById('addTeam').disabled = state.teams.length >= 20;
+function renderAll() {
+  renderHeader();
+  renderElemChips();
+  renderRoster();
+  renderUnavail();
+  renderSelBanner();
+  renderTeams();
 }
 
-loadState();
-unavailableSet = new Set(state.unavailableIds);
-renderElemFilters();
-renderRoster();
-renderUnavailableRoster();
-renderTeams();
+/* ── mobile tabs ── */
+function isMobile() { return window.matchMedia('(max-width:780px)').matches; }
+function setTab(tab) {
+  activeTab = tab;
+  const sidebar = document.getElementById('sidebar');
+  const main    = document.getElementById('main');
+  if (isMobile()) {
+    sidebar.classList.toggle('m-hide', tab !== 'roster');
+    main.classList.toggle('m-hide', tab !== 'teams');
+  } else {
+    sidebar.classList.remove('m-hide');
+    main.classList.remove('m-hide');
+  }
+  document.getElementById('tab-roster').classList.toggle('active', tab === 'roster');
+  document.getElementById('tab-teams').classList.toggle('active', tab === 'teams');
+}
+window.matchMedia('(max-width:780px)').addEventListener('change', () => setTab(activeTab));
 
-const rosterGrid = document.getElementById('roster');
-const unavailGrid = document.getElementById('unavailable');
+/* ── zone drag-over handlers ── */
+const rosterGrid  = document.getElementById('roster');
+const unavailZone = document.getElementById('unavail-zone');
 
-rosterGrid.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+rosterGrid.addEventListener('dragover', e => {
+  if (dragId != null && dragFrom === 'unavail') {
+    e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    rosterGrid.classList.add('rz-over');
+  }
+});
+rosterGrid.addEventListener('dragleave', e => {
+  if (!rosterGrid.contains(e.relatedTarget)) rosterGrid.classList.remove('rz-over');
+});
 rosterGrid.addEventListener('drop', e => {
-  e.preventDefault();
-  if (draggingId !== null && isUnavailable(draggingId)) {
-    const idx = state.unavailableIds.indexOf(draggingId);
-    if (idx > -1) { state.unavailableIds.splice(idx, 1); unavailableSet.delete(draggingId); }
-    draggingId = null;
-    saveState(); renderRoster(); renderUnavailableRoster();
-  }
+  e.preventDefault(); rosterGrid.classList.remove('rz-over');
+  if (dragId != null && dragFrom === 'unavail') restore(dragId);
+  dragId = null; dragFrom = null;
 });
 
-unavailGrid.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
-unavailGrid.addEventListener('drop', e => {
-  e.preventDefault();
-  if (draggingId !== null && !isUnavailable(draggingId)) {
-    state.unavailableIds.push(draggingId);
-    unavailableSet.add(draggingId);
-    draggingId = null;
-    saveState(); renderRoster(); renderUnavailableRoster();
+unavailZone.addEventListener('dragover', e => {
+  if (dragId != null && dragFrom === 'roster') {
+    e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    unavailZone.classList.add('uz-over');
   }
 });
+unavailZone.addEventListener('dragleave', e => {
+  if (!unavailZone.contains(e.relatedTarget)) unavailZone.classList.remove('uz-over');
+});
+unavailZone.addEventListener('drop', e => {
+  e.preventDefault(); unavailZone.classList.remove('uz-over');
+  if (dragId != null && dragFrom === 'roster') markUnavailable(dragId);
+  dragId = null; dragFrom = null;
+});
 
+/* ── banner buttons ── */
+document.getElementById('sel-cancel').addEventListener('click', () => {
+  selId = null; renderRoster(); renderTeams(); renderSelBanner();
+});
+document.getElementById('sel-mark').addEventListener('click', () => {
+  if (selId != null) markUnavailable(selId);
+});
+
+/* ── search / add ── */
 document.getElementById('search').addEventListener('input', e => {
   searchQ = e.target.value.trim(); renderRoster();
 });
-
-document.getElementById('addTeam').addEventListener('click', () => {
+document.getElementById('add-btn').addEventListener('click', () => {
   if (state.teams.length >= 20) return;
-  state.teams.push([null, null, null]); state.notes.push('');
-  saveState(); renderTeams();
-  const t = document.getElementById('teams');
-  t.scrollTop = t.scrollHeight;
+  state.teams.push([null,null,null]); state.notes.push('');
+  save(); renderAll();
+  setTimeout(() => { const t = document.getElementById('teams'); t.scrollTop = t.scrollHeight; }, 0);
 });
 
 document.addEventListener('dragover', e => e.preventDefault());
-document.addEventListener('drop', e => e.preventDefault());
+document.addEventListener('drop',     e => e.preventDefault());
+
+/* ── init ── */
+load();
+unavailSet = new Set(state.unavailableIds);
+setTab('teams');
+renderAll();
 </script>
 </body>
 </html>
