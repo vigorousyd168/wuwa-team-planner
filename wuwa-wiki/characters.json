@@ -369,5 +369,26 @@
     "element": "湮灭",
     "star": 4,
     "img": "4eb3a10a888b47fdb8bff1ac3114b2e720240811.png"
+  },
+  {
+    "id": 54,
+    "name": "洛瑟菈",
+    "element": "冷凝",
+    "star": 5,
+    "img": "02cc3035c22145f586b11efae12055f220260610.png"
+  },
+  {
+    "id": 55,
+    "name": "露西",
+    "element": "衍射",
+    "star": 5,
+    "img": "244760076f714546a0e79ecb75f8b5c920260608.png"
+  },
+  {
+    "id": 56,
+    "name": "丽贝卡",
+    "element": "导电",
+    "star": 5,
+    "img": "b2b4eee99f294ee8b1296c09f7063e3e20260608.png"
   }
 ]
