@@ -27,9 +27,3 @@
 #### Scenario: 清空搜索框恢复全部
 - **WHEN** 用户清空搜索框
 - **THEN** 卡牌库恢复展示全部已获得角色
-
-## REMOVED Requirements
-
-### Requirement: 未获得角色在主库中显示降低的视觉权重
-**Reason**: 未获得角色已从主卡牌库中移除，改为只在"未获得"库区域展示，无需在主库中保留其视觉标记。
-**Migration**: 未获得角色的视觉样式改由 `unavailable-character-roster` 能力管理。
