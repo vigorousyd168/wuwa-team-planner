@@ -10,7 +10,7 @@ IMG_REL  = './wuwa-wiki/images'
 with open(BASE / 'wuwa-wiki' / 'characters.json', encoding='utf-8') as f:
     chars = json.load(f)
 
-SUSTAIN_NAMES = {'守岸人', '莫宁', '维里奈', '卜灵', '白芷'}
+SUSTAIN_NAMES = {'守岸人', '莫宁', '维里奈', '卜灵', '白芷', '穗穗'}
 
 characters = []
 for c in chars:
@@ -92,7 +92,7 @@ header {
 .mob-tab.active { color: #3fd6e4; border-bottom-color: #3fd6e4; }
 #layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 aside {
-  display: flex; flex-direction: column; width: 372px; flex-shrink: 0; min-width: 0;
+  display: flex; flex-direction: column; flex: 1; min-width: 0;
   border-right: 1px solid #1f2b47; background: rgba(13,19,33,.6); overflow: hidden;
 }
 .sb-top { display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 12px; border-bottom: 1px solid #1f2b47; }
@@ -142,7 +142,7 @@ aside {
   display: flex; align-items: center; gap: 4px; padding: 14px 7px 5px;
   background: linear-gradient(180deg,rgba(5,8,16,0) 0%,rgba(5,8,16,.92) 55%);
 }
-.cc .cc-name { flex: 1; font-size: 12px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc .cc-name { flex: 1; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cc .cc-elem { width: 14px; height: 14px; flex-shrink: 0; }
 .unavail-sec {
   flex-shrink: 0; display: flex; flex-direction: column; gap: 8px;
@@ -172,7 +172,7 @@ aside {
 .uc img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(.75); }
 .uc .uc-name {
   position: absolute; bottom: 0; left: 0; right: 0; padding: 8px 4px 3px;
-  font-size: 10px; text-align: center; color: #cfdbf3; white-space: nowrap;
+  font-size: 12px; text-align: center; color: #cfdbf3; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
   background: linear-gradient(180deg,rgba(5,8,16,0) 0%,rgba(5,8,16,.95) 60%);
 }
@@ -250,7 +250,7 @@ main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-wid
 .slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .slot-name {
   position: absolute; bottom: 0; left: 0; right: 0; padding: 8px 4px 3px;
-  font-size: 10px; text-align: center; color: #fff; white-space: nowrap;
+  font-size: 12px; text-align: center; color: #fff; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
   background: linear-gradient(180deg,rgba(5,8,16,0) 0%,rgba(5,8,16,.92) 60%);
 }
@@ -263,8 +263,8 @@ main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-wid
 .slot.s-filled:hover .slot-clear { display: flex; }
 .slot-clear:hover { background: #ff4d6d; color: #fff; }
 .team-note {
-  flex: 1; min-width: 150px; height: 74px; background: #0d1424; border: 1px solid #243154;
-  border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #cfdbf3; resize: none;
+  flex: 1; min-width: 100px; height: 74px; background: #0d1424; border: 1px solid #243154;
+  border-radius: 8px; padding: 8px 10px; font-size: 14px; color: #cfdbf3; resize: none;
   outline: none; line-height: 1.5; transition: border-color .15s;
 }
 .team-note:focus { border-color: #3fd6e4; }
@@ -275,6 +275,14 @@ main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-wid
   transition: color .15s, border-color .15s;
 }
 .team-del:hover { color: #ff5e7a; border-color: #ff5e7a; }
+@media (min-width: 1900px) {
+  #teams { display: grid; grid-template-columns: 1fr 1fr; align-content: start; }
+  #teams:has(.no-teams) { display: flex; flex-direction: column; }
+  .team-row { gap: 8px; padding: 10px; }
+  .team-num { width: 42px; }
+  .slot { width: 62px; height: 62px; }
+  .team-note { height: 62px; }
+}
 @media (max-width: 780px) {
   #mob-tabs { display: flex; }
   aside { width: 100%; border-right: none; }
@@ -356,7 +364,7 @@ const ELEM_MAP = {
 };
 const ELEM_ORDER = ['冰凝','气动','导电','热熔','湮灭','衍射'];
 const BY_ID = new Map(CHARACTERS.map(c => [c.id, c]));
-const PRESET_UNAVAIL = [4,5,6,9,10,11,13,16,17,18,19,21,22,25,29];
+const PRESET_UNAVAIL = [5,6,9,10,11,13,16,17,18,19,21,22,25,29];
 
 let state = { teams: [], notes: [], unavailableIds: [] };
 let unavailSet = new Set();
