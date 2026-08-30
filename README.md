@@ -13,20 +13,19 @@ A local team-planning tool for Wuthering Waves (鸣潮编队小助手). Build an
 
 ## Usage
 
-1. Generate the self-contained HTML file:
-
-   ```
-   python generate.py
-   ```
-
-2. Open `index.html` in any modern browser — no server needed.
+Open `index.html` in any modern browser — no server needed.
 
 ## Project structure
 
 ```
 wuwa-deck/
-├── generate.py          # builds index.html from character data + templates
-├── index.html           # generated output (open this in a browser)
+├── index.html           # app markup (open this in a browser)
+├── css/
+│   └── style.css        # app styles
+├── js/
+│   ├── app.js           # app logic
+│   └── data.js          # generated character/icon data (do not edit by hand)
+├── generate.py          # builds js/data.js from character data
 └── wuwa-wiki/
     ├── characters.json  # character data (id, name, element, star, img)
     └── images/          # character portraits and element icons
@@ -34,4 +33,4 @@ wuwa-deck/
 
 ## Updating character data
 
-Edit `wuwa-wiki/characters.json` to add or remove characters, then re-run `python generate.py` to rebuild `index.html`.
+Edit `wuwa-wiki/characters.json` to add or remove characters, then re-run `python generate.py` to rebuild `js/data.js`.
