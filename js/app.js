@@ -1,12 +1,12 @@
 const ELEM_MAP = {
-  '冰凝': { key: 'bingning', color: '#56b7ff' },
+  '冷凝': { key: 'bingning', color: '#56b7ff' },
   '气动': { key: 'qidong',   color: '#3fdcab' },
   '导电': { key: 'daodian',  color: '#b88cff' },
   '热熔': { key: 'rerong',   color: '#ff8a4d' },
   '湮灭': { key: 'jielin',   color: '#ff6597' },
   '衍射': { key: 'yanshe',   color: '#ffd35e' }
 };
-const ELEM_ORDER = ['冰凝','气动','导电','热熔','湮灭','衍射'];
+const ELEM_ORDER = ['冷凝','气动','导电','热熔','湮灭','衍射'];
 const BY_ID = new Map(CHARACTERS.map(c => [c.id, c]));
 const PRESET_UNAVAIL = [5,6,9,10,11,13,16,17,18,19,21,22,25,29];
 

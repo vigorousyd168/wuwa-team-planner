@@ -2,7 +2,7 @@
   {
     "id": 1,
     "name": "绯雪",
-    "element": "冰凝",
+    "element": "冷凝",
     "star": 5,
     "img": "e56693dc98c34f5ea0d39882609eb69e20260401.png"
   },
@@ -149,7 +149,7 @@
   {
     "id": 22,
     "name": "珂莱塔",
-    "element": "冰凝",
+    "element": "冷凝",
     "star": 5,
     "img": "0a4ef56e74564a1f986e6743c14dc29320241124.png"
   },
@@ -170,7 +170,7 @@
   {
     "id": 25,
     "name": "折枝",
-    "element": "冰凝",
+    "element": "冷凝",
     "star": 5,
     "img": "91471558ec4c41eb86eb6ae151ac56b620240811.png"
   },
@@ -254,7 +254,7 @@
   {
     "id": 37,
     "name": "凌阳",
-    "element": "冰凝",
+    "element": "冷凝",
     "star": 5,
     "img": "b70978c32d874946837c502621a9caa720240811.png"
   },
@@ -310,14 +310,14 @@
   {
     "id": 45,
     "name": "釉瑚",
-    "element": "冰凝",
+    "element": "冷凝",
     "star": 4,
     "img": "6245a5688a724a9287b9f4648d2237ff20240811.png"
   },
   {
     "id": 46,
     "name": "白芷",
-    "element": "冰凝",
+    "element": "冷凝",
     "star": 4,
     "img": "0a6c256bdd5c4865bc316b110eca7d7520240811.png"
   },
@@ -331,7 +331,7 @@
   {
     "id": 48,
     "name": "散华",
-    "element": "冰凝",
+    "element": "冷凝",
     "star": 4,
     "img": "76e37020ebd74c2f84ec259cebfc4cbc20240811.png"
   },
@@ -411,5 +411,40 @@
     "element": "气动",
     "star": 5,
     "img": "389481e28b674e5d9894141179863e6f20260810.png"
+  },
+  {
+    "id": 60,
+    "name": "心",
+    "element": "导电",
+    "star": 5,
+    "img": "d8f2293a0cd74adf8f4ec1ee7e322b6620260829.png"
+  },
+  {
+    "id": 61,
+    "name": "锁暝",
+    "element": "导电",
+    "star": 5,
+    "img": "ef38965eeaa044f8b5ea93635abb161820260829.png"
+  },
+  {
+    "id": 62,
+    "name": "景燃",
+    "element": "热熔",
+    "star": 5,
+    "img": "befddf3913ef4aa8ac6c9553847ece6b20260810.png"
+  },
+  {
+    "id": 63,
+    "name": "漂泊者-女-导电",
+    "element": "导电",
+    "star": 5,
+    "img": "b406ac3876794ec6bbfe538fbe40ae4220240527.png"
+  },
+  {
+    "id": 64,
+    "name": "漂泊者-男-导电",
+    "element": "导电",
+    "star": 5,
+    "img": "4a17be9c00854f9ca85f4b460b32653f20240527.png"
   }
 ]
