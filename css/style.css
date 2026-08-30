@@ -187,7 +187,7 @@ main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-wid
 .team-num-val   { font-size: 22px; font-weight: 700; color: #3fd6e4; line-height: 1.1; }
 .slots { display: flex; gap: 8px; flex-shrink: 0; }
 .slot {
-  position: relative; width: 74px; height: 74px; border-radius: 10px; overflow: hidden;
+  position: relative; width: 84px; height: 112px; border-radius: 10px; overflow: hidden;
   border: 1px dashed #2a3858; background: #0c1322; cursor: pointer;
   transition: border-color .15s, background .15s;
 }
@@ -215,9 +215,10 @@ main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-wid
 .slot.s-filled:hover .slot-clear { display: flex; }
 .slot-clear:hover { background: #ff4d6d; color: #fff; }
 .team-note {
-  flex: 1; min-width: 100px; height: 74px; background: #0d1424; border: 1px solid #243154;
+  flex: 1; min-width: 100px; height: 112px; background: #0d1424; border: 1px solid #243154;
   border-radius: 8px; padding: 8px 10px; font-size: 14px; color: #cfdbf3; resize: none;
   outline: none; line-height: 1.5; transition: border-color .15s;
+  font-family: 'Segoe UI Variable Text','Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
 }
 .team-note:focus { border-color: #3fd6e4; }
 .team-del {
@@ -232,8 +233,8 @@ main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-wid
   #teams:has(.no-teams) { display: flex; flex-direction: column; }
   .team-row { gap: 8px; padding: 10px; }
   .team-num { width: 42px; }
-  .slot { width: 62px; height: 62px; }
-  .team-note { height: 62px; }
+  .slot { width: 72px; height: 96px; }
+  .team-note { height: 96px; }
 }
 @media (max-width: 780px) {
   #mob-tabs { display: flex; }
