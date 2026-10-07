@@ -8,7 +8,6 @@ const ELEM_MAP = {
 };
 const ELEM_ORDER = ['冷凝','气动','导电','热熔','湮灭','衍射'];
 const BY_ID = new Map(CHARACTERS.map(c => [c.id, c]));
-const PRESET_UNAVAIL = [5,6,9,10,11,13,16,17,18,19,21,22,25,29];
 
 let state = { teams: [], notes: [], unavailableIds: [] };
 let unavailSet = new Set();
@@ -29,14 +28,14 @@ function load() {
         state.teams = p.teams.map(r => [r[0]??null, r[1]??null, r[2]??null]);
         state.notes = Array.isArray(p.notes) ? p.notes.slice() : [];
         while (state.notes.length < state.teams.length) state.notes.push('');
-        state.unavailableIds = Array.isArray(p.unavailableIds) ? p.unavailableIds.slice() : PRESET_UNAVAIL.slice();
+        state.unavailableIds = Array.isArray(p.unavailableIds) ? p.unavailableIds.slice() : [];
         return;
       }
     }
   } catch(e) { console.warn('wuwa-deck: load failed', e); }
   state.teams = Array.from({length: 6}, () => [null,null,null]);
   state.notes = Array(6).fill('');
-  state.unavailableIds = PRESET_UNAVAIL.slice();
+  state.unavailableIds = [];
 }
 function useCounts() {
   const m = {};
