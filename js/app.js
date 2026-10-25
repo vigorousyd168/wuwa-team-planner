@@ -122,7 +122,7 @@ function renderRoster() {
       <img src="${esc(c.img)}" alt="${esc(c.name)}" draggable="false">
       <span class="cc-star">${c.star}★</span>
       ${c.sustain ? '<span class="cc-sustain">辅 ×2</span>' : ''}
-      ${c.id === state.doubleId ? '<span class="cc-double">加 ×2</span>' : ''}
+      ${c.id === state.doubleId ? '<span class="cc-sustain">体 ×2</span>' : ''}
       <div class="cc-foot">
         <span class="cc-name">${esc(c.name)}</span>
         ${ic ? `<img class="cc-elem" src="${esc(ic)}" alt="">` : ''}
@@ -189,10 +189,11 @@ function renderSelBanner() {
     banner.style.display = 'none';
   }
 }
-function renderSlot(ti, si, cid) {
+function renderSlot(ti, si, cid, counts) {
   const c = cid != null ? BY_ID.get(cid) : null;
   if (!c) return `<div class="slot" data-si="${si}"><div class="slot-plus">＋</div></div>`;
-  return `<div class="slot s-filled" data-si="${si}">
+  const over = counts[c.id] > threshold(c);
+  return `<div class="slot s-filled${over ? ' s-warn' : ''}" data-si="${si}"${over ? ' title="编入次数超出上限"' : ''}>
     <img src="${esc(c.img)}" alt="${esc(c.name)}">
     <div class="slot-name">${esc(c.name)}</div>
     <button class="slot-clear" data-ti="${ti}" data-si="${si}">✕</button>
@@ -209,6 +210,7 @@ function renderTeams() {
     addBtn.disabled = false; addBtn.style.opacity = '1';
     return;
   }
+  const counts = useCounts();
   container.innerHTML = state.teams.map((slots, ti) => {
     const num = ('0' + (ti + 1)).slice(-2);
     return `<div class="team-row" data-ti="${ti}">
@@ -217,7 +219,7 @@ function renderTeams() {
         <span class="team-num-label">TEAM</span>
         <span class="team-num-val">${num}</span>
       </div>
-      <div class="slots">${slots.map((cid, si) => renderSlot(ti, si, cid)).join('')}</div>
+      <div class="slots">${slots.map((cid, si) => renderSlot(ti, si, cid, counts)).join('')}</div>
       <textarea class="team-note" data-ti="${ti}" placeholder="队伍备注 Notes…">${esc(state.notes[ti]||'')}</textarea>
       <button class="team-del" data-ti="${ti}" title="删除此队伍">✕</button>
     </div>`;
