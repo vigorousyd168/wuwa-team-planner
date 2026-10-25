@@ -9,7 +9,7 @@ const ELEM_MAP = {
 const ELEM_ORDER = ['冷凝','气动','导电','热熔','湮灭','衍射'];
 const BY_ID = new Map(CHARACTERS.map(c => [c.id, c]));
 
-let state = { teams: [], notes: [], unavailableIds: [] };
+let state = { teams: [], notes: [], unavailableIds: [], doubleId: null };
 let unavailSet = new Set();
 let dragId = null, dragFrom = null, dragTeam = null;
 let selId = null;
@@ -29,6 +29,7 @@ function load() {
         state.notes = Array.isArray(p.notes) ? p.notes.slice() : [];
         while (state.notes.length < state.teams.length) state.notes.push('');
         state.unavailableIds = Array.isArray(p.unavailableIds) ? p.unavailableIds.slice() : [];
+        state.doubleId = typeof p.doubleId === 'number' ? p.doubleId : null;
         return;
       }
     }
@@ -36,13 +37,14 @@ function load() {
   state.teams = Array.from({length: 6}, () => [null,null,null]);
   state.notes = Array(6).fill('');
   state.unavailableIds = [];
+  state.doubleId = null;
 }
 function useCounts() {
   const m = {};
   state.teams.flat().forEach(id => { if (id != null) m[id] = (m[id]||0) + 1; });
   return m;
 }
-function threshold(c) { return c.sustain ? 2 : 1; }
+function threshold(c) { return (c.sustain || c.id === state.doubleId) ? 2 : 1; }
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -56,6 +58,7 @@ function markUnavailable(id) {
   if (unavailSet.has(id)) return;
   state.unavailableIds.push(id); unavailSet.add(id);
   if (selId === id) selId = null;
+  if (state.doubleId === id) state.doubleId = null;
   save(); renderAll();
 }
 function restore(id) {
@@ -119,6 +122,7 @@ function renderRoster() {
       <img src="${esc(c.img)}" alt="${esc(c.name)}" draggable="false">
       <span class="cc-star">${c.star}★</span>
       ${c.sustain ? '<span class="cc-sustain">辅 ×2</span>' : ''}
+      ${c.id === state.doubleId ? '<span class="cc-double">加 ×2</span>' : ''}
       <div class="cc-foot">
         <span class="cc-name">${esc(c.name)}</span>
         ${ic ? `<img class="cc-elem" src="${esc(ic)}" alt="">` : ''}
@@ -141,6 +145,13 @@ function renderRoster() {
       renderRoster(); renderTeams(); renderSelBanner();
     });
   });
+}
+function renderDoublePick() {
+  const opts = CHARACTERS.filter(c => !c.sustain && !unavailSet.has(c.id));
+  const sel = document.getElementById('double-pick');
+  sel.innerHTML = '<option value="">无</option>' +
+    opts.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  sel.value = opts.some(c => c.id === state.doubleId) ? String(state.doubleId) : '';
 }
 function renderUnavail() {
   const chars = CHARACTERS.filter(c => unavailSet.has(c.id));
@@ -281,7 +292,7 @@ function renderTeams() {
   addBtn.style.opacity = state.teams.length >= 20 ? '0.4' : '1';
 }
 function renderAll() {
-  renderHeader(); renderElemChips(); renderRoster();
+  renderHeader(); renderElemChips(); renderDoublePick(); renderRoster();
   renderUnavail(); renderSelBanner(); renderTeams();
 }
 function isMobile() { return window.matchMedia('(max-width:780px)').matches; }
@@ -335,6 +346,10 @@ document.getElementById('sel-cancel').addEventListener('click', () => {
 });
 document.getElementById('sel-mark').addEventListener('click', () => {
   if (selId != null) markUnavailable(selId);
+});
+document.getElementById('double-pick').addEventListener('change', e => {
+  state.doubleId = e.target.value ? parseInt(e.target.value) : null;
+  save(); renderAll();
 });
 document.getElementById('search').addEventListener('input', e => {
   searchQ = e.target.value.trim(); renderRoster();

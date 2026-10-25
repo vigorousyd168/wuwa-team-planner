@@ -58,6 +58,13 @@ aside {
   font-family: inherit; transition: border-color .15s;
 }
 #search:focus { border-color: #3fd6e4; }
+.double-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8294b8; white-space: nowrap; }
+#double-pick {
+  flex: 1; min-width: 0; background: #0e1526; border: 1px solid #243154; border-radius: 8px;
+  padding: 6px 10px; font-size: 13px; color: #e4ecfc; outline: none;
+  font-family: inherit; transition: border-color .15s;
+}
+#double-pick:focus { border-color: #3fd6e4; }
 #elem-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px;
@@ -88,6 +95,10 @@ aside {
 .cc .cc-sustain {
   position: absolute; top: 6px; right: 6px; padding: 1px 6px; border-radius: 4px;
   font-size: 10px; font-weight: 700; background: rgba(63,220,171,.92); color: #06281e;
+}
+.cc .cc-double {
+  position: absolute; top: 6px; right: 6px; padding: 1px 6px; border-radius: 4px;
+  font-size: 10px; font-weight: 700; background: rgba(255,211,94,.92); color: #2b2005;
 }
 .cc .cc-foot {
   position: absolute; bottom: 0; left: 0; right: 0;
