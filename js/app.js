@@ -77,9 +77,7 @@ function moveTeam(from, to) {
 function renderHeader() {
   const owned = CHARACTERS.filter(c => !unavailSet.has(c.id)).length;
   document.getElementById('h-owned').textContent = owned;
-  document.getElementById('h-total').textContent = CHARACTERS.length;
-  document.getElementById('h-teams').textContent = state.teams.length;
-}
+  document.getElementById('h-total').textContent = CHARACTERS.length;}
 function renderElemChips() {
   const el = document.getElementById('elem-chips');
   el.innerHTML = ELEM_ORDER.map(name => {
@@ -201,13 +199,11 @@ function renderSlot(ti, si, cid, counts) {
 }
 function renderTeams() {
   const container = document.getElementById('teams');
-  const addBtn = document.getElementById('add-btn');
   if (state.teams.length === 0) {
     container.innerHTML = `<div class="no-teams">
       <div class="no-teams-t">还没有队伍</div>
       <div class="no-teams-s">点击右上角「添加队伍」开始编队</div>
     </div>`;
-    addBtn.disabled = false; addBtn.style.opacity = '1';
     return;
   }
   const counts = useCounts();
@@ -290,8 +286,6 @@ function renderTeams() {
   });
   if (selId != null)
     container.querySelectorAll('.slot:not(.s-filled)').forEach(s => s.classList.add('s-place'));
-  addBtn.disabled = state.teams.length >= 20;
-  addBtn.style.opacity = state.teams.length >= 20 ? '0.4' : '1';
 }
 function renderAll() {
   renderHeader(); renderElemChips(); renderDoublePick(); renderRoster();
@@ -357,7 +351,6 @@ document.getElementById('search').addEventListener('input', e => {
   searchQ = e.target.value.trim(); renderRoster();
 });
 document.getElementById('add-btn').addEventListener('click', () => {
-  if (state.teams.length >= 20) return;
   state.teams.push([null,null,null]); state.notes.push('');
   save(); renderAll();
   setTimeout(() => { const t = document.getElementById('teams'); t.scrollTop = t.scrollHeight; }, 0);

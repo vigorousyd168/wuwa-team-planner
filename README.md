@@ -1,12 +1,12 @@
 # wuwa-deck
 
-A local team-planning tool for Wuthering Waves (鸣潮编队小助手). Build and organize up to 20 teams by drag-and-dropping characters from your owned roster.
+A local team-planning tool for Wuthering Waves (鸣潮编队小助手). Build and organize teams by drag-and-dropping characters from your owned roster.
 
 ## Features
 
 - **Character roster** — all characters with portraits, element icons, and star ratings
 - **Unavailable list** — mark characters you haven't obtained; drag them back when you pull them
-- **Team slots** — up to 20 teams of 3, with per-team notes
+- **Team slots** — teams of 3, with per-team notes
 - **Sustain logic** — healer/support characters (守岸人, 莫宁, 维里奈, 卜灵, 白芷) can appear in up to 2 teams before being dimmed; one extra non-sustain character can also be given ×2 via the "当期2体力角色" dropdown
 - **Search & filter** — search by name or click an element chip to filter the roster
 - **Persistent state** — teams, notes, and unavailable list are saved to `localStorage`
