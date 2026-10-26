@@ -9,7 +9,7 @@ const ELEM_MAP = {
 const ELEM_ORDER = ['冷凝','气动','导电','热熔','湮灭','衍射'];
 const BY_ID = new Map(CHARACTERS.map(c => [c.id, c]));
 
-let state = { teams: [], notes: [], unavailableIds: [], doubleId: null };
+let state = { teams: [], notes: [], scores: [], unavailableIds: [], doubleId: null };
 let unavailSet = new Set();
 let dragId = null, dragFrom = null, dragTeam = null;
 let selId = null;
@@ -28,6 +28,8 @@ function load() {
         state.teams = p.teams.map(r => [r[0]??null, r[1]??null, r[2]??null]);
         state.notes = Array.isArray(p.notes) ? p.notes.slice() : [];
         while (state.notes.length < state.teams.length) state.notes.push('');
+        state.scores = (Array.isArray(p.scores) ? p.scores : []).map(v => Math.max(0, parseInt(v) || 0));
+        while (state.scores.length < state.teams.length) state.scores.push(0);
         state.unavailableIds = Array.isArray(p.unavailableIds) ? p.unavailableIds.slice() : [];
         state.doubleId = typeof p.doubleId === 'number' ? p.doubleId : null;
         return;
@@ -36,6 +38,7 @@ function load() {
   } catch(e) { console.warn('wuwa-deck: load failed', e); }
   state.teams = Array.from({length: 6}, () => [null,null,null]);
   state.notes = Array(6).fill('');
+  state.scores = Array(6).fill(0);
   state.unavailableIds = [];
   state.doubleId = null;
 }
@@ -70,14 +73,16 @@ function moveTeam(from, to) {
   if (from === to) return;
   const [t] = state.teams.splice(from, 1);
   const [n] = state.notes.splice(from, 1);
+  const [s] = state.scores.splice(from, 1);
   state.teams.splice(to, 0, t);
   state.notes.splice(to, 0, n);
+  state.scores.splice(to, 0, s);
   save(); renderAll();
 }
 function renderHeader() {
-  const owned = CHARACTERS.filter(c => !unavailSet.has(c.id)).length;
-  document.getElementById('h-owned').textContent = owned;
-  document.getElementById('h-total').textContent = CHARACTERS.length;}
+  const total = state.scores.reduce((a, b) => a + b, 0);
+  document.getElementById('h-score').textContent = total.toLocaleString('en-US');
+}
 function renderElemChips() {
   const el = document.getElementById('elem-chips');
   el.innerHTML = ELEM_ORDER.map(name => {
@@ -216,8 +221,14 @@ function renderTeams() {
         <span class="team-num-val">${num}</span>
       </div>
       <div class="slots">${slots.map((cid, si) => renderSlot(ti, si, cid, counts)).join('')}</div>
-      <textarea class="team-note" data-ti="${ti}" placeholder="队伍备注 Notes…">${esc(state.notes[ti]||'')}</textarea>
-      <button class="team-del" data-ti="${ti}" title="删除此队伍">✕</button>
+      <label class="team-score-box">
+        <span class="team-score-label">得分 SCORE</span>
+        <input class="team-score" type="text" inputmode="numeric" maxlength="9" data-ti="${ti}" value="${state.scores[ti]||0}">
+      </label>
+      <div class="team-tail">
+        <textarea class="team-note" data-ti="${ti}" placeholder="队伍备注 Notes…">${esc(state.notes[ti]||'')}</textarea>
+        <button class="team-del" data-ti="${ti}" title="删除此队伍">✕</button>
+      </div>
     </div>`;
   }).join('');
   container.querySelectorAll('.slot').forEach(slot => {
@@ -250,10 +261,19 @@ function renderTeams() {
   container.querySelectorAll('.team-note').forEach(ta => {
     ta.addEventListener('input', () => { state.notes[parseInt(ta.dataset.ti)] = ta.value; save(); });
   });
+  container.querySelectorAll('.team-score').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const digits = inp.value.replace(/\D/g, '').slice(0, 9);
+      if (digits !== inp.value) inp.value = digits;
+      state.scores[parseInt(inp.dataset.ti)] = parseInt(digits) || 0;
+      save(); renderHeader();
+    });
+    inp.addEventListener('blur', () => { if (inp.value === '') inp.value = '0'; });
+  });
   container.querySelectorAll('.team-del').forEach(btn => {
     btn.addEventListener('click', () => {
       const ti = parseInt(btn.dataset.ti);
-      state.teams.splice(ti, 1); state.notes.splice(ti, 1);
+      state.teams.splice(ti, 1); state.notes.splice(ti, 1); state.scores.splice(ti, 1);
       save(); renderAll();
     });
   });
@@ -351,7 +371,7 @@ document.getElementById('search').addEventListener('input', e => {
   searchQ = e.target.value.trim(); renderRoster();
 });
 document.getElementById('add-btn').addEventListener('click', () => {
-  state.teams.push([null,null,null]); state.notes.push('');
+  state.teams.push([null,null,null]); state.notes.push(''); state.scores.push(0);
   save(); renderAll();
   setTimeout(() => { const t = document.getElementById('teams'); t.scrollTop = t.scrollHeight; }, 0);
 });
