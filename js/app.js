@@ -8,22 +8,52 @@ const ELEM_MAP = {
 };
 const ELEM_ORDER = ['冷凝','气动','导电','热熔','湮灭','衍射'];
 const BY_ID = new Map(CHARACTERS.map(c => [c.id, c]));
+const BOSS_PERIOD = 5;
+const TAIL_PX = 80;
+const DEFAULT_ROUNDS = [
+  [4680, 4680, 4680, 4680, 5668],
+  [9160, 9160, 9160, 9160, 13458],
+  [20223, 20223, 20223, 20223, 22239]
+];
 
-let state = { teams: [], notes: [], scores: [], unavailableIds: [], doubleId: null };
+let state = { teams: [], notes: [], scores: [], unavailableIds: [], doubleId: null,
+              bossDefs: [], rounds: [], viewMode: 'normal' };
 let unavailSet = new Set();
 let dragId = null, dragFrom = null, dragTeam = null;
 let selId = null;
 let searchQ = '', elemF = null;
 let activeTab = 'teams';
+let bossBarCollapsed = false;
+let bossRO = null;
+
+function defaultBossDefs() {
+  return Array.from({length: BOSS_PERIOD}, (_, i) => ({ name: 'BOSS ' + (i + 1), resists: [] }));
+}
+function loadBosses(p) {
+  const defs = Array.isArray(p.bossDefs) ? p.bossDefs : [];
+  state.bossDefs = defaultBossDefs().map((d, i) => {
+    const b = defs[i] && typeof defs[i] === 'object' ? defs[i] : {};
+    const name = typeof b.name === 'string' ? b.name.trim().slice(0, 20) : '';
+    const resists = Array.isArray(b.resists) ? ELEM_ORDER.filter(e => b.resists.includes(e)) : [];
+    return { name: name || d.name, resists };
+  });
+  const rounds = (Array.isArray(p.rounds) ? p.rounds : []).filter(Array.isArray);
+  state.rounds = rounds.length
+    ? rounds.map(r => Array.from({length: BOSS_PERIOD}, (_, i) => Math.max(0, parseInt(r[i]) || 0)))
+    : DEFAULT_ROUNDS.map(r => r.slice());
+  state.viewMode = p.viewMode === 'compare' ? 'compare' : 'normal';
+}
 
 function save() {
   localStorage.setItem('wuwa-deck-state', JSON.stringify(state));
 }
 function load() {
+  let p = {};
   try {
     const raw = localStorage.getItem('wuwa-deck-state');
     if (raw) {
-      const p = JSON.parse(raw);
+      p = JSON.parse(raw) || {};
+      loadBosses(p);
       if (Array.isArray(p.teams) && p.teams.length) {
         state.teams = p.teams.map(r => [r[0]??null, r[1]??null, r[2]??null]);
         state.notes = Array.isArray(p.notes) ? p.notes.slice() : [];
@@ -35,7 +65,8 @@ function load() {
         return;
       }
     }
-  } catch(e) { console.warn('wuwa-deck: load failed', e); }
+  } catch(e) { console.warn('wuwa-deck: load failed', e); p = {}; }
+  loadBosses(p);
   state.teams = Array.from({length: 6}, () => [null,null,null]);
   state.notes = Array(6).fill('');
   state.scores = Array(6).fill(0);
@@ -82,6 +113,124 @@ function moveTeam(from, to) {
 function renderHeader() {
   const total = state.scores.reduce((a, b) => a + b, 0);
   document.getElementById('h-score').textContent = total.toLocaleString('en-US');
+}
+function fmt(n) { return n.toLocaleString('en-US'); }
+function renderViewToggle() {
+  const cmp = state.viewMode === 'compare';
+  document.querySelectorAll('#view-toggle button').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === state.viewMode));
+  document.getElementById('teams').classList.toggle('compare', cmp);
+  document.getElementById('boss-bar').style.display = cmp ? '' : 'none';
+}
+function resistChips(bi) {
+  const rs = state.bossDefs[bi].resists;
+  return ELEM_ORDER.map(name => {
+    const e = ELEM_MAP[name];
+    const on = rs.includes(name);
+    const ic = ELEM_ICONS[e.key] || '';
+    return `<span class="rz-chip${on ? ' on' : ''}" data-bi="${bi}" data-elem="${esc(name)}" title="${esc(name)}抗性"` +
+      (on ? ` style="border-color:${e.color};background:${e.color}26"` : '') + '>' +
+      (ic ? `<img src="${esc(ic)}" alt="">` : '') + `<span>${esc(name)}</span></span>`;
+  }).join('');
+}
+function renderBossBar() {
+  const bar = document.getElementById('boss-bar');
+  if (state.viewMode !== 'compare') { bar.innerHTML = ''; return; }
+  const n = state.rounds.length;
+  const head = `<div class="bb-head">
+    <span class="bb-title">BOSS 设置</span>
+    <span class="bb-sub">${n} 轮 · 每轮 ${BOSS_PERIOD} 个</span>
+    <button class="bb-btn" id="bb-collapse">${bossBarCollapsed ? '展开 ▾' : '收起 ▴'}</button>
+    <button class="bb-btn add" id="bb-add-round">＋ 轮次</button>
+  </div>`;
+  if (bossBarCollapsed) { bar.innerHTML = head; return; }
+  bar.innerHTML = head + `<div class="bb-scroll"><table class="bb-table">
+    <thead><tr><th></th><th>名称</th><th>抗性</th>${state.rounds.map((_, ri) =>
+      `<th class="bb-rh">R${ri + 1}${ri === n - 1 && n > 1 ? '<button class="bb-del-round" title="删除此轮">✕</button>' : ''}</th>`
+    ).join('')}</tr></thead>
+    <tbody>${state.bossDefs.map((d, bi) => `<tr>
+      <td class="bb-idx">${bi + 1}</td>
+      <td><input class="bb-name" data-bi="${bi}" maxlength="20" value="${esc(d.name)}"></td>
+      <td class="bb-rz">${resistChips(bi)}</td>
+      ${state.rounds.map((r, ri) =>
+        `<td><input class="bb-score" data-ri="${ri}" data-bi="${bi}" type="text" inputmode="numeric" maxlength="9" value="${r[bi]}"></td>`
+      ).join('')}
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+function renderBossCards() {
+  const col = document.querySelector('#teams .boss-col');
+  if (!col) return;
+  const total = state.scores.reduce((a, b) => a + b, 0);
+  const seq = [];
+  state.rounds.forEach((r, ri) => r.forEach((score, bi) => { if (score > 0) seq.push({ri, bi, score}); }));
+  let acc = 0, lastRi = -1;
+  col.innerHTML = seq.length ? seq.map(b => {
+    const start = acc, end = acc + b.score;
+    acc = end;
+    const st = end <= total ? 'cleared' : start < total ? 'partial' : 'unreached';
+    const d = state.bossDefs[b.bi];
+    const label = `R${b.ri + 1}-${b.bi + 1}`;
+    const status = st === 'cleared' ? '✓' : st === 'partial' ? `${fmt(total - start)} / ${fmt(b.score)}` : '';
+    const icons = d.resists.map(name => {
+      const ic = ELEM_ICONS[ELEM_MAP[name].key] || '';
+      return ic ? `<img src="${esc(ic)}" alt="${esc(name)}">` : '';
+    }).join('');
+    const title = `${label} ${d.name}\n所需 ${fmt(b.score)}` +
+      (d.resists.length ? `\n抗性：${d.resists.join('、')}` : '') +
+      (st === 'cleared' ? '\n已击破' : st === 'partial' ? `\n已打 ${status}` : '\n未到达');
+    const rStart = b.ri !== lastRi;
+    lastRi = b.ri;
+    return `<div class="boss-card ${st}${rStart ? ' round-start' : ''}" data-start="${start}" data-end="${end}" title="${esc(title)}">
+      ${st === 'partial' ? '<div class="bc-tail"></div>' : ''}
+      <div class="bc-body">
+        <div class="bc-top"><span class="bc-tag">${label}</span><span class="bc-rz">${icons}</span></div>
+        <div class="bc-name">${esc(d.name)}</div>
+        <div class="bc-score">${fmt(b.score)}</div>
+        ${status ? `<div class="bc-status">${status}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('') : '<div class="boss-empty">设置 BOSS 分数以对照进度</div>';
+  layoutBosses();
+}
+function layoutBosses() {
+  const wrap = document.querySelector('#teams .cmp-wrap');
+  if (!wrap) return;
+  const col = wrap.querySelector('.boss-col');
+  const rows = [...wrap.querySelectorAll('.team-row')].map((r, ti) =>
+    ({ top: r.offsetTop, h: r.offsetHeight, s: state.scores[ti] || 0 }));
+  const total = rows.reduce((a, r) => a + r.s, 0);
+  const firstScored = rows.find(r => r.s > 0);
+  // Cumulative score -> y: lands inside the team whose running total first reaches S.
+  const y = S => {
+    if (S <= 0) return firstScored ? firstScored.top : 0;
+    let c = 0, last = 0;
+    for (const r of rows) {
+      if (r.s <= 0) continue;
+      if (S <= c + r.s) return r.top + (S - c) / r.s * r.h;
+      c += r.s; last = r.top + r.h;
+    }
+    return last;
+  };
+  let tailY = total > 0 ? y(total) : 0;
+  col.querySelectorAll('.boss-card').forEach(card => {
+    const start = +card.dataset.start, end = +card.dataset.end;
+    let top, h;
+    if (end <= total) {
+      top = y(start); h = y(end) - top;
+    } else if (start < total) {
+      top = y(start);
+      const cov = y(total) - top;
+      h = cov + TAIL_PX;
+      card.querySelector('.bc-tail').style.top = cov + 'px';
+      tailY = top + h;
+    } else {
+      top = tailY; h = TAIL_PX; tailY += TAIL_PX;
+    }
+    card.style.top = (top + 1) + 'px';
+    card.style.height = Math.max(2, h - 2) + 'px';
+  });
+  col.style.minHeight = tailY + 'px';
 }
 function renderElemChips() {
   const el = document.getElementById('elem-chips');
@@ -204,6 +353,8 @@ function renderSlot(ti, si, cid, counts) {
 }
 function renderTeams() {
   const container = document.getElementById('teams');
+  if (bossRO) { bossRO.disconnect(); bossRO = null; }
+  const cmp = state.viewMode === 'compare';
   if (state.teams.length === 0) {
     container.innerHTML = `<div class="no-teams">
       <div class="no-teams-t">还没有队伍</div>
@@ -212,7 +363,7 @@ function renderTeams() {
     return;
   }
   const counts = useCounts();
-  container.innerHTML = state.teams.map((slots, ti) => {
+  const rowsHtml = state.teams.map((slots, ti) => {
     const num = ('0' + (ti + 1)).slice(-2);
     return `<div class="team-row" data-ti="${ti}">
       <div class="drag-handle" draggable="true" data-ti="${ti}" title="拖动排序">⠿</div>
@@ -231,6 +382,9 @@ function renderTeams() {
       </div>
     </div>`;
   }).join('');
+  container.innerHTML = cmp
+    ? `<div class="cmp-wrap"><div class="boss-col"></div><div class="cmp-teams">${rowsHtml}</div></div>`
+    : rowsHtml;
   container.querySelectorAll('.slot').forEach(slot => {
     const row = slot.closest('.team-row');
     slot.addEventListener('click', () => {
@@ -267,6 +421,7 @@ function renderTeams() {
       if (digits !== inp.value) inp.value = digits;
       state.scores[parseInt(inp.dataset.ti)] = parseInt(digits) || 0;
       save(); renderHeader();
+      if (cmp) renderBossCards();
     });
     inp.addEventListener('blur', () => { if (inp.value === '') inp.value = '0'; });
   });
@@ -306,10 +461,15 @@ function renderTeams() {
   });
   if (selId != null)
     container.querySelectorAll('.slot:not(.s-filled)').forEach(s => s.classList.add('s-place'));
+  if (cmp) {
+    renderBossCards();
+    bossRO = new ResizeObserver(() => layoutBosses());
+    bossRO.observe(container.querySelector('.cmp-teams'));
+  }
 }
 function renderAll() {
   renderHeader(); renderElemChips(); renderDoublePick(); renderRoster();
-  renderUnavail(); renderSelBanner(); renderTeams();
+  renderUnavail(); renderSelBanner(); renderViewToggle(); renderBossBar(); renderTeams();
 }
 function isMobile() { return window.matchMedia('(max-width:780px)').matches; }
 function setTab(tab) {
@@ -366,6 +526,47 @@ document.getElementById('sel-mark').addEventListener('click', () => {
 document.getElementById('double-pick').addEventListener('change', e => {
   state.doubleId = e.target.value ? parseInt(e.target.value) : null;
   save(); renderAll();
+});
+document.getElementById('view-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn || btn.dataset.mode === state.viewMode) return;
+  state.viewMode = btn.dataset.mode;
+  save(); renderAll();
+});
+const bossBar = document.getElementById('boss-bar');
+bossBar.addEventListener('input', e => {
+  const t = e.target;
+  if (t.classList.contains('bb-name')) {
+    state.bossDefs[parseInt(t.dataset.bi)].name = t.value;
+  } else if (t.classList.contains('bb-score')) {
+    const digits = t.value.replace(/\D/g, '').slice(0, 9);
+    if (digits !== t.value) t.value = digits;
+    state.rounds[parseInt(t.dataset.ri)][parseInt(t.dataset.bi)] = parseInt(digits) || 0;
+  } else return;
+  save(); renderBossCards();
+});
+bossBar.addEventListener('focusout', e => {
+  if (e.target.classList.contains('bb-score') && e.target.value === '') e.target.value = '0';
+});
+bossBar.addEventListener('click', e => {
+  const chip = e.target.closest('.rz-chip');
+  if (chip) {
+    const bi = parseInt(chip.dataset.bi), el = chip.dataset.elem;
+    const d = state.bossDefs[bi];
+    const on = d.resists.includes(el);
+    d.resists = ELEM_ORDER.filter(x => x === el ? !on : d.resists.includes(x));
+    chip.parentElement.innerHTML = resistChips(bi);
+    save(); renderBossCards();
+  } else if (e.target.closest('#bb-add-round')) {
+    state.rounds.push(Array(BOSS_PERIOD).fill(0));
+    save(); renderAll();
+  } else if (e.target.closest('.bb-del-round')) {
+    if (state.rounds.length > 1) state.rounds.pop();
+    save(); renderAll();
+  } else if (e.target.closest('#bb-collapse')) {
+    bossBarCollapsed = !bossBarCollapsed;
+    renderBossBar();
+  }
 });
 document.getElementById('search').addEventListener('input', e => {
   searchQ = e.target.value.trim(); renderRoster();
