@@ -10,7 +10,7 @@ IMG_REL = './wuwa-wiki/images'
 with open(BASE / 'wuwa-wiki' / 'characters.json', encoding='utf-8') as f:
     chars = json.load(f)
 
-SUSTAIN_NAMES = {'守岸人', '莫宁', '维里奈', '卜灵', '白芷', '穗穗'}
+SUSTAIN_NAMES = {'守岸人', '莫宁', '维里奈', '卜灵', '白芷', '穗穗', '莉莉'}
 
 characters = []
 for c in chars:

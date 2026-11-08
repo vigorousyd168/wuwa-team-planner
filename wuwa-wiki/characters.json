@@ -446,5 +446,12 @@
     "element": "导电",
     "star": 5,
     "img": "4a17be9c00854f9ca85f4b460b32653f20240527.png"
+  },
+  {
+    "id": 65,
+    "name": "莉莉",
+    "element": "衍射",
+    "star": 5,
+    "img": "925568129dd44f2e9d6da52ed9f3c53820261013.png"
   }
 ]
