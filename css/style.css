@@ -277,13 +277,14 @@ main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-wid
 .bb-table th { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: #5d6f96; text-align: left; padding: 0 6px 4px; white-space: nowrap; }
 .bb-table td { padding: 2px 6px; vertical-align: middle; }
 .bb-idx { color: #3fd6e4; font-weight: 700; font-size: 14px; text-align: center; }
-.bb-name, .bb-score {
+.bb-name, .bb-team, .bb-score {
   background: #0e1526; border: 1px solid #243154; border-radius: 6px; padding: 4px 8px;
   font-size: 13px; color: #e4ecfc; outline: none; font-family: inherit; transition: border-color .15s;
 }
 .bb-name  { width: 130px; }
+.bb-team  { width: 110px; }
 .bb-score { width: 92px; font-family: 'Rajdhani',sans-serif; font-weight: 700; font-size: 15px; color: #3fd6e4; font-variant-numeric: tabular-nums; }
-.bb-name:focus, .bb-score:focus { border-color: #3fd6e4; }
+.bb-name:focus, .bb-team:focus, .bb-score:focus { border-color: #3fd6e4; }
 .bb-rz { display: flex; gap: 4px; white-space: nowrap; }
 .rz-chip {
   display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 999px;
@@ -321,13 +322,13 @@ main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-wid
 .bc-top { display: flex; align-items: center; gap: 4px; }
 .bc-tag { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #ffd35e; }
 .boss-card.cleared .bc-tag { color: #3fd6e4; }
-.bc-rz { display: flex; gap: 2px; margin-left: auto; }
-.bc-rz img { width: 16px; height: 16px; display: block; }
+.bc-rz { position: absolute; top: 4px; right: 8px; display: flex; gap: 2px; }
+.bc-rz img { width: 24px; height: 24px; display: block; }
 .bc-name { font-size: 13px; color: #eef4ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bc-score { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; color: #aab8d6; font-variant-numeric: tabular-nums; }
 .bc-status { font-family: 'Rajdhani',sans-serif; font-size: 12px; font-weight: 700; color: #ffd35e; white-space: nowrap; }
 .boss-card.cleared .bc-status { position: absolute; top: 4px; right: 8px; color: #3fd6e4; font-size: 14px; }
-.boss-card.cleared .bc-rz { margin-right: 14px; }
+.boss-card.cleared .bc-rz { right: 24px; }
 .boss-card.unreached .bc-name, .boss-card.unreached .bc-score { color: #5d6f96; }
 @media (min-width: 1900px) {
   #teams:not(.compare) { display: grid; grid-template-columns: 1fr 1fr; align-content: start; }

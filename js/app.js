@@ -13,7 +13,15 @@ const TAIL_PX = 80;
 const DEFAULT_ROUNDS = [
   [4680, 4680, 4680, 4680, 5668],
   [9160, 9160, 9160, 9160, 13458],
-  [20223, 20223, 20223, 20223, 22239]
+  [20223, 20223, 20223, 20223, 22239],
+  [0, 0, 0, 0, 0]
+];
+const DEFAULT_BOSSES = [
+  { name: '飞廉之猩', resists: ['气动'], team: '谐度破坏' },
+  { name: '达妮娅',   resists: ['热熔'], team: '异常效应' },
+  { name: '无冠者',   resists: ['湮灭'], team: '同奏' },
+  { name: '辛吉勒姆', resists: ['衍射'], team: '声骸' },
+  { name: '矩阵奇藏', resists: [],       team: '' }
 ];
 
 let state = { teams: [], notes: [], scores: [], unavailableIds: [], doubleId: null,
@@ -27,7 +35,7 @@ let bossBarCollapsed = false;
 let bossRO = null;
 
 function defaultBossDefs() {
-  return Array.from({length: BOSS_PERIOD}, (_, i) => ({ name: 'BOSS ' + (i + 1), resists: [] }));
+  return DEFAULT_BOSSES.map(b => ({ name: b.name, resists: b.resists.slice(), team: b.team }));
 }
 function loadBosses(p) {
   const defs = Array.isArray(p.bossDefs) ? p.bossDefs : [];
@@ -35,7 +43,8 @@ function loadBosses(p) {
     const b = defs[i] && typeof defs[i] === 'object' ? defs[i] : {};
     const name = typeof b.name === 'string' ? b.name.trim().slice(0, 20) : '';
     const resists = Array.isArray(b.resists) ? ELEM_ORDER.filter(e => b.resists.includes(e)) : [];
-    return { name: name || d.name, resists };
+    const team = typeof b.team === 'string' ? b.team.slice(0, 30) : '';
+    return { name: name || d.name, resists, team };
   });
   const rounds = (Array.isArray(p.rounds) ? p.rounds : []).filter(Array.isArray);
   state.rounds = rounds.length
@@ -141,17 +150,19 @@ function renderBossBar() {
     <span class="bb-title">BOSS 设置</span>
     <span class="bb-sub">${n} 轮 · 每轮 ${BOSS_PERIOD} 个</span>
     <button class="bb-btn" id="bb-collapse">${bossBarCollapsed ? '展开 ▾' : '收起 ▴'}</button>
+    <button class="bb-btn" id="bb-reset">恢复当期默认</button>
     <button class="bb-btn add" id="bb-add-round">＋ 轮次</button>
   </div>`;
   if (bossBarCollapsed) { bar.innerHTML = head; return; }
   bar.innerHTML = head + `<div class="bb-scroll"><table class="bb-table">
-    <thead><tr><th></th><th>名称</th><th>抗性</th>${state.rounds.map((_, ri) =>
+    <thead><tr><th></th><th>名称</th><th>抗性</th><th>适合队伍体系</th>${state.rounds.map((_, ri) =>
       `<th class="bb-rh">R${ri + 1}${ri === n - 1 && n > 1 ? '<button class="bb-del-round" title="删除此轮">✕</button>' : ''}</th>`
     ).join('')}</tr></thead>
     <tbody>${state.bossDefs.map((d, bi) => `<tr>
       <td class="bb-idx">${bi + 1}</td>
       <td><input class="bb-name" data-bi="${bi}" maxlength="20" value="${esc(d.name)}"></td>
       <td class="bb-rz">${resistChips(bi)}</td>
+      <td><input class="bb-team" data-bi="${bi}" maxlength="30" value="${esc(d.team)}"></td>
       ${state.rounds.map((r, ri) =>
         `<td><input class="bb-score" data-ri="${ri}" data-bi="${bi}" type="text" inputmode="numeric" maxlength="9" value="${r[bi]}"></td>`
       ).join('')}
@@ -178,6 +189,7 @@ function renderBossCards() {
     }).join('');
     const title = `${label} ${d.name}\n所需 ${fmt(b.score)}` +
       (d.resists.length ? `\n抗性：${d.resists.join('、')}` : '') +
+      (d.team ? `\n适合队伍体系：${d.team}` : '') +
       (st === 'cleared' ? '\n已击破' : st === 'partial' ? `\n已打 ${status}` : '\n未到达');
     const rStart = b.ri !== lastRi;
     lastRi = b.ri;
@@ -538,6 +550,8 @@ bossBar.addEventListener('input', e => {
   const t = e.target;
   if (t.classList.contains('bb-name')) {
     state.bossDefs[parseInt(t.dataset.bi)].name = t.value;
+  } else if (t.classList.contains('bb-team')) {
+    state.bossDefs[parseInt(t.dataset.bi)].team = t.value;
   } else if (t.classList.contains('bb-score')) {
     const digits = t.value.replace(/\D/g, '').slice(0, 9);
     if (digits !== t.value) t.value = digits;
@@ -557,6 +571,11 @@ bossBar.addEventListener('click', e => {
     d.resists = ELEM_ORDER.filter(x => x === el ? !on : d.resists.includes(x));
     chip.parentElement.innerHTML = resistChips(bi);
     save(); renderBossCards();
+  } else if (e.target.closest('#bb-reset')) {
+    if (!confirm('恢复 BOSS 名称、抗性、适合队伍体系和各轮分数为当期默认值？')) return;
+    state.bossDefs = defaultBossDefs();
+    state.rounds = DEFAULT_ROUNDS.map(r => r.slice());
+    save(); renderAll();
   } else if (e.target.closest('#bb-add-round')) {
     state.rounds.push(Array(BOSS_PERIOD).fill(0));
     save(); renderAll();
